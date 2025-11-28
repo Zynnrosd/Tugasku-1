@@ -15,7 +15,12 @@ app.use('/api/tasks', tasksRouter);
 app.use('/api/courses', coursesRouter);
 app.use('/api/profiles', profilesRouter);
 
-app.get('/', (req, res) => res.json({ message: 'Tugasku backend' }));
+
+app.get('/', (req, res) => res.json({ 
+  message: 'Backend API Tugasku is Running! 🚀',
+  status: 'Server On',
+  author: 'Zyan'
+}));
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
