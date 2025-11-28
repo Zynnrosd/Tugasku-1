@@ -1,163 +1,160 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, Keyboard } from "react-native";
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, TextInput, Alert, ActivityIndicator, StatusBar } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-
 import api from "../services/api";
 import theme from "../constants/theme";
-import Input from "../components/Input"; 
 
 export default function CoursesScreen() {
   const [courses, setCourses] = useState([]);
-  const [name, setName] = useState("");
-  const [editingId, setEditingId] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [newCourse, setNewCourse] = useState("");
+  const [adding, setAdding] = useState(false);
 
-  const fetchCourses = async () => {
+  const loadCourses = async () => {
     try {
       const res = await api.get("/courses");
       setCourses(res.data.data || []);
-    } catch (err) {
-      console.log("Err load courses:", err);
-    }
-  };
-
-  const handleSave = async () => {
-    if (!name.trim()) return Alert.alert("Error", "Nama mata kuliah kosong!");
-    setLoading(true);
-    Keyboard.dismiss();
-
-    try {
-      if (editingId) {
-        await api.put(`/courses/${editingId}`, { name });
-        setEditingId(null);
-      } else {
-        await api.post("/courses", { name });
-      }
-      setName("");
-      fetchCourses();
     } catch (error) {
       console.log(error);
-      Alert.alert("Gagal", "Pastikan backend jalan dan koneksi aman.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEdit = (item) => {
-    setEditingId(item.id);
-    setName(item.name);
+  useEffect(() => { loadCourses(); }, []);
+
+  const handleAdd = async () => {
+    if (!newCourse.trim()) return;
+    setAdding(true);
+    try {
+      await api.post("/courses", { name: newCourse });
+      setNewCourse("");
+      loadCourses();
+    } catch (error) {
+      Alert.alert("Gagal", "Gagal menambah mata kuliah");
+    } finally {
+      setAdding(false);
+    }
   };
 
   const handleDelete = (id) => {
-    Alert.alert("Hapus", "Yakin? Tugas terkait juga akan terhapus.", [
+    Alert.alert("Hapus", "Yakin hapus mata kuliah ini? Tugas terkait mungkin ikut terhapus.", [
       { text: "Batal" },
       { text: "Hapus", style: 'destructive', onPress: async () => {
           try {
             await api.delete(`/courses/${id}`);
-            fetchCourses();
-          } catch(e) { Alert.alert("Gagal Hapus"); }
-      }}
+            loadCourses();
+          } catch (e) { Alert.alert("Gagal menghapus"); }
+        } 
+      }
     ]);
   };
 
-  useEffect(() => { fetchCourses(); }, []);
-
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={theme.text.header}>Mata Kuliah</Text>
-        <Text style={theme.text.body}>Kelola daftar matkul kamu di sini</Text>
-      </View>
-
-      {/* Form Input */}
-      <View style={styles.formCard}>
-        <View style={{flex: 1, marginRight: 10}}>
-           <Input 
-              placeholder="Nama Matkul (Cth: Pemrograman Web)" 
-              value={name} 
-              onChangeText={setName}
-              style={{marginBottom: 0, borderWidth: 0, backgroundColor: theme.colors.secondary}} 
-           />
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="white" />
+      <SafeAreaView edges={['top']} style={styles.safeArea}>
+        
+        <View style={styles.header}>
+          <Text style={styles.title}>Mata Kuliah</Text>
+          <Text style={styles.subtitle}>Kelola daftar pelajaranmu</Text>
         </View>
-        <TouchableOpacity 
-          style={[styles.btnIcon, { backgroundColor: editingId ? theme.colors.warning : theme.colors.primary }]} 
-          onPress={handleSave}
-          disabled={loading}
-        >
-          <Ionicons name={editingId ? "save" : "add"} size={24} color="white" />
-        </TouchableOpacity>
-      </View>
 
-      <FlatList
-        data={courses}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: theme.spacing.m }}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <View style={styles.row}>
-                <View style={styles.iconContainer}>
-                  <Ionicons name="book" size={20} color={theme.colors.primary} />
-                </View>
-                <Text style={styles.cardTitle}>{item.name}</Text>
-            </View>
-            
-            <View style={styles.row}>
-              <TouchableOpacity onPress={() => handleEdit(item)} style={{padding: 8}}>
-                <Ionicons name="pencil" size={20} color={theme.colors.warning} />
+        {/* FORM INPUT - DIPERBAIKI AGAR LURUS */}
+        <View style={styles.formContainer}>
+          <TextInput 
+            style={styles.input} 
+            placeholder="Tambah mata kuliah baru..." 
+            value={newCourse}
+            onChangeText={setNewCourse}
+            placeholderTextColor="#A0AEC0"
+          />
+          <TouchableOpacity 
+            style={styles.addButton} 
+            onPress={handleAdd}
+            disabled={adding}
+          >
+            {adding ? <ActivityIndicator color="white" size="small" /> : <Ionicons name="add" size={24} color="white" />}
+          </TouchableOpacity>
+        </View>
+
+        <FlatList 
+          data={courses}
+          keyExtractor={item => item.id}
+          contentContainerStyle={{ padding: 20 }}
+          renderItem={({ item }) => (
+            <View style={styles.item}>
+              <View style={styles.itemIcon}>
+                <Text style={styles.itemInitial}>{item.name.charAt(0).toUpperCase()}</Text>
+              </View>
+              <Text style={styles.itemName}>{item.name}</Text>
+              <TouchableOpacity onPress={() => handleDelete(item.id)} style={styles.deleteBtn}>
+                <Ionicons name="trash-outline" size={20} color="#E53E3E" />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleDelete(item.id)} style={{padding: 8}}>
-                <Ionicons name="trash" size={20} color={theme.colors.danger} />
-              </TouchableOpacity>
             </View>
-          </View>
-        )}
-      />
-    </SafeAreaView>
+          )}
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Text style={{color: '#A0AEC0'}}>Belum ada mata kuliah.</Text>
+            </View>
+          }
+        />
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  header: { padding: theme.spacing.l, backgroundColor: theme.colors.white },
+  container: { flex: 1, backgroundColor: "#F7FAFC" },
+  safeArea: { flex: 1, backgroundColor: 'white' },
   
-  formCard: {
-    flexDirection: "row",
-    backgroundColor: theme.colors.white,
-    padding: theme.spacing.m,
-    margin: theme.spacing.m,
-    borderRadius: theme.radius.l,
-    alignItems: 'center',
-    ...theme.shadow
+  header: { paddingHorizontal: 20, paddingVertical: 16, backgroundColor: 'white' },
+  title: { fontSize: 24, fontWeight: 'bold', color: '#2D3748' },
+  subtitle: { fontSize: 14, color: '#718096' },
+
+  // FIX INPUT AGAR SEJAJAR
+  formContainer: {
+    flexDirection: 'row', 
+    alignItems: 'center', // KUNCI AGAR SEJAJAR VERTIKAL
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#EDF2F7',
+    gap: 12 // Jarak antar input dan tombol
   },
-  btnIcon: {
-    width: 50, height: 50,
-    borderRadius: theme.radius.m,
-    justifyContent: "center", alignItems: "center",
-    ...theme.shadow
-  },
-  
-  card: {
-    flexDirection: "row",
-    justifyContent: 'space-between',
-    alignItems: "center",
-    backgroundColor: theme.colors.white,
-    borderRadius: theme.radius.m,
-    padding: theme.spacing.m,
-    marginBottom: theme.spacing.s,
-    ...theme.shadow
-  },
-  row: { flexDirection: 'row', alignItems: 'center' },
-  iconContainer: {
-    backgroundColor: theme.colors.secondary,
-    padding: 8,
-    borderRadius: theme.radius.s,
-    marginRight: 12
-  },
-  cardTitle: {
+  input: {
+    flex: 1,
+    height: 50, // Tinggi eksplisit
+    backgroundColor: '#F7FAFC',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.text,
-    maxWidth: 180
-  }
+    color: '#2D3748'
+  },
+  addButton: {
+    width: 50, // Lebar sama dengan tinggi
+    height: 50, // Tinggi sama dengan input
+    backgroundColor: theme.colors.primary,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  item: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: 'white', padding: 16, borderRadius: 12, marginBottom: 10,
+    shadowColor: "#000", shadowOpacity: 0.05, shadowOffset: {width:0,height:2}, shadowRadius: 4, elevation: 2
+  },
+  itemIcon: {
+    width: 40, height: 40, borderRadius: 20, backgroundColor: theme.colors.primary + '20',
+    justifyContent: 'center', alignItems: 'center', marginRight: 12
+  },
+  itemInitial: { fontSize: 18, fontWeight: 'bold', color: theme.colors.primary },
+  itemName: { flex: 1, fontSize: 16, fontWeight: '600', color: '#2D3748' },
+  deleteBtn: { padding: 8 },
+  empty: { alignItems: 'center', marginTop: 50 }
 });

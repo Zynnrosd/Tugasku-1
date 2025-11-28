@@ -1,146 +1,184 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from "react-native";
+import React, { useLayoutEffect } from "react";
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, StatusBar } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import api from "../services/api";
 import theme from "../constants/theme";
-import taskService from "../services/taskService";
 
 export default function TaskDetailScreen({ route, navigation }) {
   const { task } = route.params;
-  const [loading, setLoading] = useState(false);
-  const [currentStatus, setCurrentStatus] = useState(task.status); // Local state untuk update instan
 
-  const handleStatusToggle = async () => {
-     setLoading(true);
-     // Tentukan status baru
-     const newStatus = currentStatus === 'Done' ? 'Pending' : 'Done';
-     
-     try {
-        // Kirim hanya field status ke backend
-        const response = await taskService.update(task.id, { status: newStatus });
-        
-        // Update state lokal agar UI berubah
-        setCurrentStatus(newStatus);
-        Alert.alert("Sukses", `Status berhasil diubah menjadi ${newStatus}`);
-        
-        // Opsional: Kembali ke layar sebelumnya agar list ter-refresh
-        navigation.goBack();
-     } catch(e) { 
-        console.error("Gagal Update Status:", e);
-        Alert.alert("Gagal", "Gagal update status. Cek koneksi internet."); 
-     } finally {
-        setLoading(false);
-     }
-  };
+  // 1. FIX DOUBLE HEADER: Sembunyikan header bawaan Stack Navigator
+  useLayoutEffect(() => {
+    navigation.setOptions({ headerShown: false });
+  }, [navigation]);
 
-  const handleDelete = () => {
-    Alert.alert("Hapus", "Yakin ingin menghapus tugas ini?", [
-      { text: "Batal" },
-      { text: "Hapus", style: 'destructive', onPress: async () => {
+  // Logika Tombol Selesai
+  const handleComplete = () => {
+    Alert.alert("Konfirmasi", "Tandai tugas ini sebagai selesai?", [
+      { text: "Batal", style: "cancel" },
+      { 
+        text: "Ya, Selesai", 
+        onPress: async () => {
           try {
-            await taskService.remove(task.id);
-            navigation.goBack();
-          } catch(e) {
-            Alert.alert("Gagal", "Gagal menghapus tugas.");
+            await api.put(`/tasks/${task.id}`, { status: 'Done' }); 
+            Alert.alert("Hebat!", "Tugas berhasil diselesaikan.");
+            navigation.goBack(); 
+          } catch (e) {
+            Alert.alert("Error", "Gagal mengupdate status.");
           }
-      }}
+        }
+      }
     ]);
   };
 
-  const getStatusColor = (s) => {
-      if (s === 'Done') return theme.colors.success;
-      return theme.colors.warning; // Pending/In Progress
+  // Logika Hapus
+  const handleDelete = () => {
+    Alert.alert("Hapus", "Yakin ingin menghapus tugas ini?", [
+      { text: "Batal", style: "cancel" },
+      { text: "Hapus", style: "destructive", onPress: async () => {
+          try { await api.delete(`/tasks/${task.id}`); navigation.goBack(); } 
+          catch (e) { Alert.alert("Gagal menghapus"); }
+        }
+      }
+    ]);
   };
 
+  const getStatusColor = (s) => s === 'Done' ? theme.colors.success : (s === 'Pending' ? theme.colors.danger : theme.colors.warning);
+
   return (
-    <ScrollView style={styles.container}>
-       <View style={styles.card}>
-          <View style={[styles.headerRow, {borderLeftColor: getStatusColor(currentStatus)}]}>
-              <Text style={styles.title}>{task.title}</Text>
-              <View style={[styles.badge, {backgroundColor: getStatusColor(currentStatus) + '20'}]}>
-                  <Text style={{color: getStatusColor(currentStatus), fontWeight:'bold', fontSize:12}}>
-                      {currentStatus}
-                  </Text>
-              </View>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor={theme.colors.primary} />
+      
+      {/* HEADER CUSTOM (Sekarang satu-satunya header) */}
+      <View style={styles.header}>
+        <SafeAreaView edges={['top']} style={styles.safeHeader}>
+          <View style={styles.navBar}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.navBtn}>
+              <Ionicons name="arrow-back" size={24} color="white" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Detail Tugas</Text>
+            <TouchableOpacity onPress={() => navigation.navigate("AddTask", { task })} style={styles.navBtn}>
+              <Ionicons name="create-outline" size={24} color="white" />
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </View>
+
+      <View style={styles.contentContainer}>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          
+          <View style={styles.card}>
+             <Text style={styles.title}>{task.title}</Text>
+             
+             <View style={styles.badges}>
+               <View style={[styles.badge, {backgroundColor: getStatusColor(task.status) + '20'}]}>
+                 <Text style={[styles.badgeText, {color: getStatusColor(task.status)}]}>{task.status}</Text>
+               </View>
+               <View style={[styles.badge, {backgroundColor: '#EDF2F7'}]}>
+                 <Text style={{color: '#4A5568', fontSize: 12, fontWeight:'bold'}}>{task.priority}</Text>
+               </View>
+             </View>
+             
+             <View style={styles.divider} />
+             
+             <View style={styles.row}>
+               <Ionicons name="book" size={20} color={theme.colors.primary} />
+               <View style={styles.rowText}>
+                 <Text style={styles.label}>Mata Kuliah</Text>
+                 <Text style={styles.value}>{task.courses?.name || task.course_name || "Umum"}</Text>
+               </View>
+             </View>
+
+             <View style={styles.row}>
+               <Ionicons name="calendar" size={20} color={theme.colors.danger} />
+               <View style={styles.rowText}>
+                 <Text style={styles.label}>Deadline</Text>
+                 <Text style={styles.value}>
+                    {new Date(task.deadline).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                 </Text>
+               </View>
+             </View>
+
+             <View style={styles.divider} />
+
+             <Text style={styles.label}>Deskripsi</Text>
+             <Text style={styles.desc}>
+               {task.description || "Tidak ada deskripsi tambahan."}
+             </Text>
           </View>
 
-          <View style={styles.infoGrid}>
-              <View style={styles.infoItem}>
-                  <Ionicons name="book" size={18} color={theme.colors.primary} />
-                  <Text style={styles.infoLabel}>Mata Kuliah</Text>
-                  <Text style={styles.infoValue}>{task.courses?.name || "Umum"}</Text>
-              </View>
-              <View style={styles.infoItem}>
-                  <Ionicons name="calendar" size={18} color={theme.colors.danger} />
-                  <Text style={styles.infoLabel}>Deadline</Text>
-                  <Text style={styles.infoValue}>{task.deadline}</Text>
-              </View>
-              <View style={styles.infoItem}>
-                  <Ionicons name="flag" size={18} color={theme.colors.warning} />
-                  <Text style={styles.infoLabel}>Prioritas</Text>
-                  <Text style={styles.infoValue}>{task.priority}</Text>
-              </View>
-          </View>
+        </ScrollView>
 
-          <View style={styles.divider} />
-          <Text style={styles.sectionTitle}>Deskripsi</Text>
-          <Text style={styles.desc}>{task.description || "Tidak ada deskripsi tambahan."}</Text>
-       </View>
-
-       {/* TOMBOL AKSI */}
-       <TouchableOpacity 
-            style={[styles.btnMain, {backgroundColor: currentStatus==='Done'? theme.colors.warning : theme.colors.success}]} 
-            onPress={handleStatusToggle}
-            disabled={loading}
-       >
-           {loading ? <ActivityIndicator color="white"/> : (
-               <>
-                   <Ionicons name={currentStatus==='Done' ? "refresh" : "checkmark-circle"} size={24} color="white" style={{marginRight:10}} />
-                   <Text style={styles.btnText}>{currentStatus==='Done' ? "Tandai Belum Selesai" : "Tandai Selesai"}</Text>
-               </>
+        {/* FOOTER DENGAN 2 TOMBOL (SELESAI & HAPUS) */}
+        <View style={styles.footer}>
+           {/* Tombol Selesai (Hanya muncul jika belum Done) */}
+           {task.status !== 'Done' && (
+             <TouchableOpacity style={styles.completeBtn} onPress={handleComplete}>
+                <Ionicons name="checkmark-circle" size={20} color="white" />
+                <Text style={styles.btnText}>Tandai Selesai</Text>
+             </TouchableOpacity>
            )}
-       </TouchableOpacity>
-       
-       <View style={styles.actionRow}>
-            <TouchableOpacity style={[styles.btnSmall, {backgroundColor: theme.colors.primary}]} onPress={() => navigation.navigate('AddTask', {task})}>
-                <Ionicons name="create-outline" size={20} color="white" />
-                <Text style={styles.btnTextSmall}>Edit</Text>
-            </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.btnSmall, {backgroundColor: theme.colors.danger}]} onPress={handleDelete}>
-                <Ionicons name="trash-outline" size={20} color="white" />
-                <Text style={styles.btnTextSmall}>Hapus</Text>
-            </TouchableOpacity>
-       </View>
-    </ScrollView>
+           {/* Tombol Hapus */}
+           <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
+              <Ionicons name="trash-outline" size={20} color="#E53E3E" />
+              <Text style={[styles.btnText, {color: '#E53E3E'}]}>Hapus</Text>
+           </TouchableOpacity>
+        </View>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.secondary, padding: 20 },
-  card: { backgroundColor: 'white', padding: 24, borderRadius: 20, marginBottom: 24, ...theme.shadow },
-  headerRow: { flexDirection:'row', justifyContent:'space-between', alignItems:'flex-start', paddingLeft: 12, borderLeftWidth: 4, marginBottom: 20 },
-  title: { fontSize: 22, fontWeight: 'bold', color: theme.colors.text, flex: 1, marginRight: 10 },
-  badge: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 },
+  container: { flex: 1, backgroundColor: theme.colors.primary },
+  header: { paddingBottom: 20, backgroundColor: theme.colors.primary },
+  safeHeader: { paddingHorizontal: 16 },
+  navBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 },
+  headerTitle: { color: 'white', fontSize: 18, fontWeight: 'bold' },
+  navBtn: { padding: 8 },
   
-  infoGrid: { flexDirection: 'row', justifyContent:'space-between', marginBottom: 10 },
-  infoItem: { width:'30%', backgroundColor: theme.colors.secondary, padding: 10, borderRadius: 12, alignItems:'center' },
-  infoLabel: { fontSize: 10, color: theme.colors.subtext, marginTop: 5, marginBottom: 2 },
-  infoValue: { fontSize: 12, fontWeight: 'bold', color: theme.colors.text, textAlign:'center' },
-
-  divider: { height: 1, backgroundColor: theme.colors.border, marginVertical: 20 },
-  sectionTitle: { fontSize: 14, fontWeight: 'bold', color: theme.colors.subtext, marginBottom: 8, textTransform:'uppercase' },
-  desc: { lineHeight: 24, color: theme.colors.text, fontSize: 16 },
-
-  btnMain: { 
-      flexDirection: 'row', justifyContent:'center', alignItems:'center',
-      padding: 16, borderRadius: 16, marginBottom: 15, ...theme.shadow 
+  contentContainer: { 
+    flex: 1, 
+    backgroundColor: '#F7FAFC', 
+    borderTopLeftRadius: 24, 
+    borderTopRightRadius: 24, 
+    overflow: 'hidden' 
   },
-  btnText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
+  scrollContent: { padding: 20 },
+  
+  card: { backgroundColor: 'white', borderRadius: 16, padding: 20, ...theme.shadow.medium },
+  title: { fontSize: 22, fontWeight: 'bold', color: '#2D3748', marginBottom: 12 },
+  badges: { flexDirection: 'row', gap: 8, marginBottom: 16 },
+  badge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
+  badgeText: { fontSize: 12, fontWeight: 'bold' },
+  
+  divider: { height: 1, backgroundColor: '#EDF2F7', marginVertical: 16 },
+  row: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, gap: 12 },
+  rowText: { flex: 1 },
+  label: { fontSize: 12, color: '#718096', marginBottom: 2 },
+  value: { fontSize: 16, color: '#2D3748', fontWeight: '600' },
+  desc: { fontSize: 15, color: '#4A5568', lineHeight: 24 },
 
-  actionRow: { flexDirection:'row', gap: 15 },
-  btnSmall: { 
-      flex: 1, flexDirection: 'row', justifyContent:'center', alignItems:'center',
-      padding: 14, borderRadius: 14, ...theme.shadow 
+  footer: { 
+    padding: 20, 
+    backgroundColor: 'white', 
+    borderTopWidth: 1, 
+    borderTopColor: '#EDF2F7',
+    gap: 12 
   },
-  btnTextSmall: { color: 'white', fontWeight: 'bold', marginLeft: 5 }
+  completeBtn: { 
+    backgroundColor: theme.colors.success, 
+    padding: 16, borderRadius: 12, 
+    flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8,
+    ...theme.shadow.small
+  },
+  deleteBtn: { 
+    backgroundColor: '#FFF5F5', 
+    padding: 16, borderRadius: 12, 
+    flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8,
+    borderWidth: 1, borderColor: '#FED7D7'
+  },
+  btnText: { color: 'white', fontWeight: 'bold', fontSize: 16 }
 });

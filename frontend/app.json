@@ -5,18 +5,42 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": ["**/*"],
-    "ios": { "supportsTablet": true },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.zynrosd.tugasku" 
+    },
     "android": {
+      "package": "com.zynrosd.tugasku", 
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.CAMERA"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Izinkan TugasKu mengakses galeri untuk mengganti foto profil.",
+          "cameraPermission": "Izinkan TugasKu mengakses kamera untuk mengambil foto profil."
+        }
+      ]
+    ],
+    "web": {
+      "favicon": "./assets/favicon.png"
     }
   }
 }

@@ -1,141 +1,287 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Image, StyleSheet, ActivityIndicator, ScrollView, TouchableOpacity, TextInput, Alert } from "react-native";
+import { 
+  View, Text, Image, StyleSheet, ActivityIndicator, ScrollView, 
+  TouchableOpacity, TextInput, Alert, Platform 
+} from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from 'expo-image-picker';
 import theme from "../constants/theme";
-import api from "../services/api"; 
+import api from "../services/api";
 
 export default function ProfileScreen() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [form, setForm] = useState({ name: "", student_id: "", major: "", bio: "" });
+  
+  const [form, setForm] = useState({ 
+    name: "", 
+    student_id: "", 
+    major: "", 
+    bio: "",
+    avatar: "" 
+  });
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
+  useEffect(() => { fetchProfile(); }, []);
 
   const fetchProfile = async () => {
     try {
       const res = await api.get("/profiles");
-      if (res.data && res.data.data && res.data.data.length > 0) {
+      if (res.data?.data?.[0]) {
         const data = res.data.data[0];
         setProfile(data);
         setForm(data);
       }
-    } catch (error) {} finally { setLoading(false); }
-  };
-
-  const handleSave = async () => {
-    try {
-        if (profile?.id) {
-            await api.put("/profiles", { ...form, id: profile.id });
-        } else {
-            await api.post("/profiles", form);
-        }
-        setProfile(form);
-        setIsEditing(false);
-        Alert.alert("Sukses", "Data tersimpan!");
     } catch (error) {
-        Alert.alert("Gagal", "Gagal menyimpan.");
+      console.log("Error loading profile:", error);
+    } finally { 
+      setLoading(false); 
     }
   };
 
-  if (loading) return <ActivityIndicator style={{marginTop:50}} color={theme.colors.primary} />;
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') return Alert.alert('Izin', 'Butuh akses galeri.');
 
-  const display = profile || { name: "User", student_id: "-", major: "-", bio: "-" };
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setForm({ ...form, avatar: result.assets[0].uri });
+    }
+  };
+
+  const handleSave = async () => {
+    if (!form.name.trim()) return Alert.alert("Validasi", "Nama wajib diisi.");
+    
+    setSaving(true);
+    try {
+      if (profile?.id) {
+        await api.put("/profiles", { ...form, id: profile.id });
+      } else {
+        await api.post("/profiles", form);
+      }
+      setProfile(form);
+      setIsEditing(false);
+      Alert.alert("Berhasil", "Profil diperbarui.");
+    } catch (error) {
+      Alert.alert("Gagal", "Cek koneksi internet.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return <ActivityIndicator size="large" color={theme.colors.primary} style={{flex:1}} />;
+
+  const display = profile || { name: "Pengguna Baru", student_id: "-", major: "-", bio: "-" };
+  const avatarUri = form.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(form.name||'User')}&background=4A90E2&color=fff&size=200`;
 
   return (
-    <View style={styles.container}>
-        {/* Header Biru Simple */}
-        <View style={styles.headerBg}>
-             <SafeAreaView edges={['top']}>
-                <View style={styles.headerRow}>
-                    <Text style={styles.pageTitle}>Profil Saya</Text>
-                    <TouchableOpacity 
-                        style={styles.editBtn} 
-                        onPress={() => isEditing ? handleSave() : setIsEditing(true)}
-                    >
-                        <Ionicons name={isEditing ? "save" : "create-outline"} size={20} color="white" />
-                        <Text style={styles.editBtnText}>{isEditing ? "SIMPAN" : "EDIT"}</Text>
-                    </TouchableOpacity>
-                </View>
-             </SafeAreaView>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      
+      {/* HEADER BERSIH (Tanpa Kotak Ungu) */}
+      <View style={styles.headerNavbar}>
+        <View>
+          <Text style={styles.headerTitle}>Profil Saya</Text>
+          <Text style={styles.headerSubtitle}>Kelola informasi pribadimu</Text>
+        </View>
+        <TouchableOpacity 
+          style={styles.iconButton}
+          onPress={() => isEditing ? setIsEditing(false) : setIsEditing(true)}
+        >
+          <Ionicons 
+            name={isEditing ? "close" : "settings-outline"} 
+            size={24} 
+            color={theme.colors.text} 
+          />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        
+        {/* Profile Avatar Section */}
+        <View style={styles.avatarSection}>
+          <View style={styles.avatarWrapper}>
+            <Image source={{ uri: avatarUri }} style={styles.avatar} />
+            {isEditing && (
+              <TouchableOpacity style={styles.cameraBadge} onPress={pickImage}>
+                <Ionicons name="camera" size={18} color="white" />
+              </TouchableOpacity>
+            )}
+          </View>
+          
+          {!isEditing ? (
+            <View style={styles.centerInfo}>
+              <Text style={styles.displayName}>{display.name}</Text>
+              <View style={styles.nimBadge}>
+                <Text style={styles.displayNim}>{display.student_id}</Text>
+              </View>
+            </View>
+          ) : (
+            <Text style={styles.editingText}>Mode Edit Aktif</Text>
+          )}
         </View>
 
-        <ScrollView contentContainerStyle={{paddingBottom: 50}}>
-            {/* Kartu Profil Utama */}
-            <View style={styles.card}>
-                <View style={styles.avatarCenter}>
-                     <Image source={{ uri: `https://ui-avatars.com/api/?name=${form.name}&background=random&size=128` }} style={styles.avatar} />
-                </View>
+        {/* Form Fields */}
+        <View style={styles.formContainer}>
+          <Text style={styles.sectionLabel}>DATA DIRI</Text>
+          
+          <InputField 
+            label="Nama Lengkap" 
+            value={form.name} 
+            onChange={t => setForm({...form, name: t})} 
+            editable={isEditing} 
+            icon="person-outline"
+          />
+          <InputField 
+            label="NIM" 
+            value={form.student_id} 
+            onChange={t => setForm({...form, student_id: t})} 
+            editable={isEditing} 
+            keyboardType="numeric"
+            icon="card-outline"
+          />
+          <InputField 
+            label="Program Studi" 
+            value={form.major} 
+            onChange={t => setForm({...form, major: t})} 
+            editable={isEditing} 
+            icon="school-outline"
+          />
+          <InputField 
+            label="Bio Singkat" 
+            value={form.bio} 
+            onChange={t => setForm({...form, bio: t})} 
+            editable={isEditing} 
+            multiline
+            icon="chatbox-ellipses-outline"
+          />
 
-                {/* NAMA & NIM */}
-                <View style={{marginTop: 16, width: '100%'}}>
-                    <Text style={styles.labelInput}>NAMA LENGKAP</Text>
-                    {isEditing ? (
-                        <TextInput style={styles.inputBox} value={form.name} onChangeText={t=>setForm({...form, name:t})} placeholder="Nama Lengkap" />
-                    ) : (
-                        <Text style={styles.textValue}>{display.name}</Text>
-                    )}
-                    
-                    <Text style={[styles.labelInput, {marginTop:12}]}>NIM</Text>
-                    {isEditing ? (
-                        <TextInput style={styles.inputBox} value={form.student_id} onChangeText={t=>setForm({...form, student_id:t})} placeholder="NIM" keyboardType="numeric" />
-                    ) : (
-                        <Text style={styles.textValue}>{display.student_id}</Text>
-                    )}
-                </View>
-            </View>
+          {isEditing && (
+            <TouchableOpacity 
+              style={styles.saveButton} 
+              onPress={handleSave} 
+              disabled={saving}
+            >
+              {saving ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text style={styles.saveButtonText}>Simpan Perubahan</Text>
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
 
-            {/* Kartu Detail Info */}
-            <View style={styles.card}>
-                <Text style={styles.sectionHeader}>INFORMASI AKADEMIK</Text>
-                
-                <Text style={styles.labelInput}>PROGRAM STUDI</Text>
-                {isEditing ? (
-                    <TextInput style={styles.inputBox} value={form.major} onChangeText={t=>setForm({...form, major:t})} placeholder="Jurusan" />
-                ) : (
-                    <Text style={styles.textValue}>{display.major || "-"}</Text>
-                )}
-
-                <Text style={[styles.labelInput, {marginTop: 16}]}>BIO</Text>
-                {isEditing ? (
-                    <TextInput style={[styles.inputBox, {height:80, textAlignVertical:'top'}]} multiline value={form.bio} onChangeText={t=>setForm({...form, bio:t})} placeholder="Tulis bio singkat..." />
-                ) : (
-                    <Text style={styles.textValue}>{display.bio || "-"}</Text>
-                )}
-            </View>
-            
-            <Text style={styles.versionText}>Tugasku App v1.0</Text>
-        </ScrollView>
-    </View>
+        <Text style={styles.footerVersion}>Tugasku App v1.0.0</Text>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.secondary },
-  headerBg: { backgroundColor: theme.colors.primary, paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24, paddingHorizontal: 24 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 },
-  pageTitle: { fontSize: 20, fontWeight: 'bold', color: 'white' },
-  editBtn: { flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.2)', padding: 8, paddingHorizontal: 16, borderRadius: 20, alignItems:'center' },
-  editBtnText: { color: 'white', fontWeight: 'bold', marginLeft: 6, fontSize: 12 },
+// Helper Component
+const InputField = ({ label, value, onChange, editable, icon, multiline, keyboardType }) => (
+  <View style={styles.inputContainer}>
+    <Text style={styles.inputLabel}>{label}</Text>
+    <View style={[styles.inputWrapper, editable && styles.inputWrapperActive]}>
+      <Ionicons name={icon} size={20} color={theme.colors.textMuted} style={{marginRight: 10}} />
+      <TextInput 
+        style={[styles.input, multiline && { height: 80, textAlignVertical: 'top' }]}
+        value={value}
+        onChangeText={onChange}
+        editable={editable}
+        multiline={multiline}
+        numberOfLines={multiline ? 3 : 1}
+        keyboardType={keyboardType}
+        placeholder={editable ? `Masukkan ${label}` : "-"}
+        placeholderTextColor="#A0AEC0"
+      />
+    </View>
+  </View>
+);
 
-  card: { backgroundColor: 'white', marginHorizontal: 24, marginTop: 20, borderRadius: 16, padding: 20, ...theme.shadow },
-  avatarCenter: { alignItems: 'center', marginTop: -50 }, // Avatar keluar dikit dari card (efek floating)
-  avatar: { width: 90, height: 90, borderRadius: 45, borderWidth: 4, borderColor: 'white' },
-  
-  labelInput: { fontSize: 11, color: theme.colors.subtext, fontWeight: 'bold', marginBottom: 6 },
-  textValue: { fontSize: 16, color: theme.colors.text, fontWeight: '500', marginBottom: 4 },
-  
-  // Style Input Kotak Jelas
-  inputBox: { 
-      borderWidth: 1, borderColor: theme.colors.border, 
-      borderRadius: 10, padding: 12, 
-      fontSize: 16, color: theme.colors.text,
-      backgroundColor: '#F8FAFC'
+const styles = StyleSheet.create({
+  container: { 
+    flex: 1, 
+    backgroundColor: theme.colors.background 
   },
   
-  sectionHeader: { fontSize: 14, fontWeight: 'bold', color: theme.colors.primary, marginBottom: 16, letterSpacing: 1 },
-  versionText: { textAlign:'center', color: theme.colors.subtext, marginTop: 20, fontSize: 12 }
+  // Header Styles
+  headerNavbar: {
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center',
+    paddingHorizontal: 24, 
+    paddingVertical: 20,
+    backgroundColor: theme.colors.background,
+  },
+  headerTitle: { fontSize: 28, fontWeight: 'bold', color: theme.colors.text },
+  headerSubtitle: { fontSize: 14, color: theme.colors.textMuted, marginTop: 2 },
+  iconButton: {
+    padding: 8,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.border
+  },
+
+  content: { paddingHorizontal: 24, paddingBottom: 50 },
+  
+  // Avatar Section
+  avatarSection: {
+    alignItems: 'center',
+    marginBottom: 30,
+    marginTop: 10
+  },
+  avatarWrapper: { position: 'relative', marginBottom: 16 },
+  avatar: { 
+    width: 110, 
+    height: 110, 
+    borderRadius: 55, 
+    backgroundColor: '#E2E8F0' // Placeholder color
+  },
+  cameraBadge: {
+    position: 'absolute', bottom: 0, right: 0, backgroundColor: theme.colors.primary,
+    padding: 8, borderRadius: 20, borderWidth: 3, borderColor: theme.colors.background,
+  },
+  centerInfo: { alignItems: 'center' },
+  displayName: { fontSize: 22, fontWeight: 'bold', color: theme.colors.text, marginBottom: 6 },
+  nimBadge: {
+    backgroundColor: theme.colors.primary + '15', // Transparan
+    paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8
+  },
+  displayNim: { fontSize: 14, color: theme.colors.primary, fontWeight: '700' },
+  editingText: { color: theme.colors.warning, fontWeight: 'bold', fontStyle: 'italic' },
+
+  // Form Styles
+  formContainer: {
+    backgroundColor: 'white', borderRadius: 20, padding: 20,
+    ...theme.shadow.small, // Menggunakan shadow halus dari theme
+  },
+  sectionLabel: {
+    fontSize: 12, fontWeight: 'bold', color: theme.colors.textMuted,
+    marginBottom: 20, letterSpacing: 1
+  },
+  
+  inputContainer: { marginBottom: 16 },
+  inputLabel: { fontSize: 12, color: theme.colors.text, marginBottom: 6, fontWeight: '600' },
+  inputWrapper: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#F7FAFC',
+    borderRadius: 12, paddingHorizontal: 12, borderWidth: 1, borderColor: '#EDF2F7'
+  },
+  inputWrapperActive: { borderColor: theme.colors.primary, backgroundColor: 'white' },
+  input: { flex: 1, paddingVertical: 12, fontSize: 15, color: theme.colors.text },
+
+  saveButton: {
+    backgroundColor: theme.colors.primary, padding: 16, borderRadius: 14,
+    alignItems: 'center', marginTop: 10, 
+    shadowColor: theme.colors.primary, shadowOffset: {width:0, height:4}, shadowOpacity:0.2, shadowRadius:8
+  },
+  saveButtonText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
+  
+  footerVersion: { textAlign: 'center', marginTop: 30, color: theme.colors.textMuted, fontSize: 12 }
 });

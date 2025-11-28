@@ -1,40 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { StatusBar } from 'expo-status-bar';
-import * as ExpoSplashScreen from 'expo-splash-screen'; // Import Expo Splash
+import React, { useState } from 'react';
+// Hapus import StatusBar dari 'react-native'
+// import { StatusBar } from 'react-native'; 
 
-// Navigasi & Screen
+// Gunakan StatusBar dari Expo agar lebih kompatibel
+import { StatusBar } from 'expo-status-bar'; 
 import RootNavigator from './src/navigation/RootNavigator';
 import SplashScreen from './src/screens/SplashScreen';
 
-// Cegah splash screen bawaan Android hilang otomatis (biar transisi mulus)
-ExpoSplashScreen.preventAutoHideAsync();
-
 export default function App() {
-  const [isShowSplash, setIsShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(true);
 
-  useEffect(() => {
-    // Sembunyikan splash screen bawaan HP setelah React siap
-    const hideNativeSplash = async () => {
-      await ExpoSplashScreen.hideAsync();
-    };
-    hideNativeSplash();
-  }, []);
-
-  const handleSplashFinish = () => {
-    setIsShowSplash(false);
-  };
-
-  // LOGIKA UTAMA:
-  // Jika isShowSplash == true, tampilkan SplashScreen buatan kita.
-  // Jika false, tampilkan RootNavigator (Aplikasi Utama).
-  if (isShowSplash) {
-    return <SplashScreen onComplete={handleSplashFinish} />;
+  if (showSplash) {
+    return <SplashScreen onComplete={() => setShowSplash(false)} />;
   }
 
   return (
     <>
-      {/* Status Bar dibuat 'light' agar tulisan jam/baterai putih (bagus di header biru) */}
-      <StatusBar style="auto" /> 
+      {/* style="auto" atau "dark" menyesuaikan warna ikon (jam, baterai).
+        backgroundColor="transparent" agar gradasi header terlihat penuh.
+        translucent={true} agar aplikasi digambar di belakang status bar (Android).
+      */}
+      <StatusBar style="auto" backgroundColor="transparent" translucent={true} />
       <RootNavigator />
     </>
   );
