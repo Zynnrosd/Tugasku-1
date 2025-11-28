@@ -15,7 +15,7 @@ import SelectPriority from "../components/SelectPriority";
 import SelectStatus from "../components/SelectStatus";
 import SelectCourseModal from "../components/SelectCourseModal";
 
-// Komponen Input (Di luar fungsi utama agar keyboard aman)
+// Komponen Input
 const FormInput = ({ label, icon, value, onChangeText, placeholder, multiline }) => (
   <View style={styles.inputGroup}>
     <Text style={styles.label}>{label}</Text>
@@ -53,7 +53,7 @@ export default function AddTaskScreen({ route, navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // 1. SOLUSI DOUBLE HEADER: Sembunyikan header native saat halaman ini dimuat
+  // 1. SOLUSI DOUBLE HEADER
   useLayoutEffect(() => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
@@ -69,7 +69,7 @@ export default function AddTaskScreen({ route, navigation }) {
   }, []);
 
   const onDateChange = (event, selectedDate) => {
-    // Tutup picker jika di Android (iOS butuh logika beda jika inline)
+    
     if (Platform.OS === 'android') {
         setShowDatePicker(false);
     }
@@ -109,7 +109,7 @@ export default function AddTaskScreen({ route, navigation }) {
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{flex: 1}}>
         
-        {/* Header Custom (Satu-satunya yang akan tampil) */}
+        {/* Header Custom */}
         <View style={styles.header}>
            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
               <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
@@ -175,15 +175,15 @@ export default function AddTaskScreen({ route, navigation }) {
                 <Ionicons name="time-outline" size={20} color={theme.colors.subtext} />
               </TouchableOpacity>
               
-              {/* 2. SOLUSI DATE PICKER SCROLL (display="spinner") */}
+              {/* 2. DATE PICKER SCROLL (display="spinner") */}
               {showDatePicker && (
                 <DateTimePicker 
                   value={deadlineDate} 
                   mode="date" 
-                  display="spinner" // <--- Ini membuat tampilan scroll
+                  display="spinner" 
                   onChange={onDateChange} 
                   minimumDate={new Date()}
-                  textColor="black" // Penting untuk iOS dark mode
+                  textColor="black"
                 />
               )}
             </View>

@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import BottomTabs from "./BottomTabs";
 import TaskDetailScreen from "../screens/TaskDetailScreen";
 import AddTaskScreen from "../screens/AddTaskScreen";
-import theme from "../constants/theme"; // Import theme
+import theme from "../constants/theme";
 
 const Stack = createNativeStackNavigator();
 
@@ -15,7 +15,7 @@ export default function RootNavigator() {
         screenOptions={{ 
           headerShown: false,
           headerStyle: { backgroundColor: theme.colors.background },
-          headerShadowVisible: false, // Hilangkan garis di bawah header
+          headerShadowVisible: false,
           headerTitleStyle: { fontWeight: '700', color: theme.colors.text },
           headerTitleAlign: 'center',
           headerTintColor: theme.colors.primary

@@ -84,7 +84,7 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       
-      {/* HEADER BERSIH (Tanpa Kotak Ungu) */}
+      {/* HEADER */}
       <View style={styles.headerNavbar}>
         <View>
           <Text style={styles.headerTitle}>Profil Saya</Text>
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
   // Form Styles
   formContainer: {
     backgroundColor: 'white', borderRadius: 20, padding: 20,
-    ...theme.shadow.small, // Menggunakan shadow halus dari theme
+    ...theme.shadow.small,
   },
   sectionLabel: {
     fontSize: 12, fontWeight: 'bold', color: theme.colors.textMuted,

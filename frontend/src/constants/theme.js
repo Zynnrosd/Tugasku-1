@@ -1,29 +1,29 @@
 const theme = {
   colors: {
     primary: "#4A90E2",
-    secondary: "#F0F4F8", // Warna input field background
-    background: "#F8F9FC", // Warna background utama yang bersih
+    secondary: "#F0F4F8", 
+    background: "#F8F9FC", 
     card: "#FFFFFF",
     text: "#1A202C",
     textMuted: "#718096",
     border: "#E2E8F0",
     
     // Status
-    success: "#38A169", // Hijau
-    warning: "#D69E2E", // Kuning/Emas
-    danger: "#E53E3E",  // Merah
-    info: "#3182CE",    // Biru
+    success: "#38A169",
+    warning: "#D69E2E", 
+    danger: "#E53E3E",  
+    info: "#3182CE",    
     white: "#FFFFFF",
     divider: "#EDF2F7",
   },
-  // Tambahan Gradients untuk tampilan modern
+  // Tambahan Gradients untuk tampilan
   gradients: {
-    primary: ['#4A90E2', '#357ABD'], // Biru Header
-    cool: ['#667EEA', '#764BA2'],    // Ungu-Biru Keren
-    warm: ['#F6AD55', '#ED8936'],    // Oranye (Medium)
-    danger: ['#FC8181', '#F56565'],  // Merah (High)
-    success: ['#68D391', '#48BB78'], // Hijau (Low/Done)
-    secondary: ['#63B3ED', '#4299E1'], // Aksen
+    primary: ['#4A90E2', '#357ABD'], 
+    cool: ['#667EEA', '#764BA2'],   
+    warm: ['#F6AD55', '#ED8936'],    
+    danger: ['#FC8181', '#F56565'],  
+    success: ['#68D391', '#48BB78'], 
+    secondary: ['#63B3ED', '#4299E1'], 
   },
   sizes: {
     xs: 12,

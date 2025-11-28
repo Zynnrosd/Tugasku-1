@@ -17,7 +17,7 @@ export default function BottomTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarShowLabel: true, // Tampilkan label agar lebih informatif
+        tabBarShowLabel: true,
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: '#A0AEC0',
         tabBarStyle: {
@@ -27,7 +27,7 @@ export default function BottomTabs() {
           paddingTop: 10,
           borderTopWidth: 1,
           borderTopColor: '#EDF2F7',
-          elevation: 0, // Hilangkan shadow agar terlihat clean
+          elevation: 0,
         },
         tabBarLabelStyle: {
           fontSize: 11,

@@ -59,7 +59,7 @@ export default function TaskItem({ task, onPress }) {
       }) 
     : "Tanpa Batas";
 
-  // Cek deadline (Hanya jika status bukan Done)
+  // Cek deadline
   const isOverdue = task.deadline && 
                     task.deadline < new Date().toISOString().split('T')[0] && 
                     task.status !== 'Done' && 
@@ -135,19 +135,19 @@ export default function TaskItem({ task, onPress }) {
 const styles = StyleSheet.create({
   container: {
     marginBottom: 12,
-    marginHorizontal: 4, // Memberikan ruang untuk shadow
+    marginHorizontal: 4,
   },
   card: {
     backgroundColor: theme.colors.card,
     borderRadius: theme.radius.l,
     flexDirection: 'row',
     overflow: 'hidden',
-    ...theme.shadow.small, // Menggunakan shadow halus
+    ...theme.shadow.small,
     borderWidth: 1,
     borderColor: 'transparent',
   },
   cardOverdue: {
-    borderColor: theme.colors.danger + '40', // Border merah tipis jika terlambat
+    borderColor: theme.colors.danger + '40',
   },
   borderGradient: {
     width: 6,

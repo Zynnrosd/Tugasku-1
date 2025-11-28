@@ -61,7 +61,7 @@ export default function CoursesScreen() {
           <Text style={styles.subtitle}>Kelola daftar pelajaranmu</Text>
         </View>
 
-        {/* FORM INPUT - DIPERBAIKI AGAR LURUS */}
+        {/* FORM INPUT */}
         <View style={styles.formContainer}>
           <TextInput 
             style={styles.input} 
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
   // FIX INPUT AGAR SEJAJAR
   formContainer: {
     flexDirection: 'row', 
-    alignItems: 'center', // KUNCI AGAR SEJAJAR VERTIKAL
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingBottom: 16,
     backgroundColor: 'white',

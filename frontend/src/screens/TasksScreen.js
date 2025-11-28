@@ -310,11 +310,11 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: 20,
     paddingTop: 10,
-    paddingBottom: 100, // Space for FAB
+    paddingBottom: 100,
   },
   fabContainer: {
     position: 'absolute',
-    bottom: 90, // Naik sedikit agar tidak tertutup TabBar
+    bottom: 90,
     right: 20,
   },
   fab: {

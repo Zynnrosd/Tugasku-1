@@ -23,10 +23,8 @@ export const upsertProfile = async (req, res) => {
   return success(res, data, "Profile updated");
 };
 
-// --- ADD THIS FUNCTION ---
+
 export const updateProfile = async (req, res) => {
-  // We assume updating the single profile or by ID if passed
-  // For this app, upsert is often enough, but specific update is safer
   const { id, name, student_id, bio, major } = req.body;
 
   const { data, error: err } = await supabase

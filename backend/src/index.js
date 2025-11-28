@@ -4,7 +4,7 @@ import { logger } from './middleware/logger.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import tasksRouter from './routes/tasks.js';
 import coursesRouter from './routes/courses.js';
-import profilesRouter from './routes/profiles.js'; // kalau ada
+import profilesRouter from './routes/profiles.js';
 
 const app = express();
 app.use(cors());

@@ -14,9 +14,9 @@ export default function SelectStatus({ value, onChange }) {
           
           // Logika Warna Sesuai Request
           let activeColor = theme.colors.primary;
-          if (opt === "Done") activeColor = theme.colors.success;        // Hijau
-          else if (opt === "Pending") activeColor = theme.colors.danger; // Merah
-          else if (opt === "On Progress") activeColor = theme.colors.warning; // Kuning
+          if (opt === "Done") activeColor = theme.colors.success;        
+          else if (opt === "Pending") activeColor = theme.colors.danger; 
+          else if (opt === "On Progress") activeColor = theme.colors.warning; 
 
           return (
             <TouchableOpacity

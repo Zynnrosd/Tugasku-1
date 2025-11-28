@@ -15,7 +15,7 @@ export default function SplashScreen({ onComplete }) {
 
   return (
     <LinearGradient
-      colors={theme.gradients.cool} // Konsisten dengan tema utama
+      colors={theme.gradients.cool}
       style={styles.container}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}

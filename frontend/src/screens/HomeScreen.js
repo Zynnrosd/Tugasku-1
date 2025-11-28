@@ -13,8 +13,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import api from "../services/api";
 import theme from "../constants/theme";
-import TaskItem from "../components/TaskItem"; // Pastikan komponen ini ada
-
+import TaskItem from "../components/TaskItem";
 export default function HomeScreen({ navigation }) {
   const [tasks, setTasks] = useState([]);
   const [stats, setStats] = useState({ total: 0, pending: 0, today: 0, late: 0 });
@@ -26,7 +25,7 @@ export default function HomeScreen({ navigation }) {
   const [dateList, setDateList] = useState([]);
   const [tasksByDate, setTasksByDate] = useState([]);
 
-  // 1. Generate Tanggal (2 Minggu ke depan)
+  // 1. Generate Tanggal
   useEffect(() => {
     const dates = [];
     for (let i = 0; i < 14; i++) {
@@ -125,7 +124,7 @@ export default function HomeScreen({ navigation }) {
       >
         {/* Header */}
         <View style={styles.headerSection}>
-            <Text style={theme.text.header}>Halo, Pelajar! 👋</Text>
+            <Text style={theme.text.header}>Halo ! 👋</Text>
             <Text style={theme.text.subtitle}>Siap menyelesaikan tugas hari ini?</Text>
         </View>
 
@@ -286,7 +285,7 @@ const styles = StyleSheet.create({
   dateItemActive: { 
     backgroundColor: theme.colors.primary, 
     borderColor: theme.colors.primary,
-    transform: [{scale: 1.05}] // Efek membesar sedikit saat aktif
+    transform: [{scale: 1.05}]
   },
   dayName: { fontSize: 12, marginBottom: 4, fontWeight: '600' },
   dayNumber: { fontSize: 20, fontWeight: 'bold' },
@@ -309,7 +308,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border, 
     borderRadius: 16, 
     borderStyle: 'dashed',
-    backgroundColor: theme.colors.surface + '80' // Sedikit transparan
+    backgroundColor: theme.colors.surface + '80'
   },
   emptyText: {
     color: theme.colors.subtext,

@@ -8,7 +8,7 @@ import theme from "../constants/theme";
 export default function TaskDetailScreen({ route, navigation }) {
   const { task } = route.params;
 
-  // 1. FIX DOUBLE HEADER: Sembunyikan header bawaan Stack Navigator
+  // 1. FIX DOUBLE HEADER
   useLayoutEffect(() => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
@@ -50,7 +50,7 @@ export default function TaskDetailScreen({ route, navigation }) {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={theme.colors.primary} />
       
-      {/* HEADER CUSTOM (Sekarang satu-satunya header) */}
+      {/* HEADER CUSTOM */}
       <View style={styles.header}>
         <SafeAreaView edges={['top']} style={styles.safeHeader}>
           <View style={styles.navBar}>

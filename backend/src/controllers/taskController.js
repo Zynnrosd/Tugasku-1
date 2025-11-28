@@ -1,8 +1,6 @@
 import { supabase } from "../config/supabaseClient.js";
 
-/**
- * Helper: attach course_name to task list (efficient enough for TA)
- */
+
 const attachCourseNames = async (tasks) => {
   if (!Array.isArray(tasks) || tasks.length === 0) return tasks;
   
@@ -40,7 +38,6 @@ export const getTasks = async (req, res) => {
 
   const withNames = await attachCourseNames(data);
   
-  // PENTING: Bungkus dengan { data: ... } agar cocok dengan frontend (res.data.data)
   return res.json({ data: withNames }); 
 };
 
@@ -61,7 +58,7 @@ export const getTaskById = async (req, res) => {
 export const createTask = async (req, res) => {
   const payload = req.body;
   // defaults
-  payload.priority = payload.priority || 'Medium'; // Sesuaikan casing dengan frontend
+  payload.priority = payload.priority || 'Medium';
   payload.status = payload.status || 'Pending';
 
   const { data, error } = await supabase
