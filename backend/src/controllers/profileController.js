@@ -1,39 +1,55 @@
 import { supabase } from "../config/supabaseClient.js";
-import { success, error } from "../utils/response.js";
 
+// Get Profile
 export const getProfile = async (req, res) => {
-  const { data, error: err } = await supabase
-    .from("profiles")
-    .select("*")
-    .limit(1)
-    .single();
+  try {
+    const deviceId = req.headers['device-id'];
+    if (!deviceId) return res.status(400).json({ message: 'Device ID missing' });
 
-  if (err) return error(res, err.message, 500);
-  return success(res, data);
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('device_id', deviceId)
+      .single();
+
+    // Code PGRST116 = Data tidak ditemukan (user baru), kita return object kosong aman
+    if (error && error.code !== 'PGRST116') {
+      throw error;
+    }
+
+    return res.json({ data: data || {} }); 
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
 };
 
-export const upsertProfile = async (req, res) => {
-  const { data, error: err } = await supabase
-    .from("profiles")
-    .upsert(req.body)
-    .select()
-    .single();
-
-  if (err) return error(res, err.message, 400);
-  return success(res, data, "Profile updated");
-};
-
-
+// Update / Create Profile (Upsert)
 export const updateProfile = async (req, res) => {
-  const { id, name, student_id, bio, major } = req.body;
+  try {
+    const deviceId = req.headers['device-id'];
+    const { name, student_id, email, bio } = req.body;
 
-  const { data, error: err } = await supabase
-    .from("profiles")
-    .update({ name, student_id, bio, major })
-    .eq('id', id) // Frontend must send the ID
-    .select()
-    .single();
+    if (!deviceId) return res.status(400).json({ message: 'Device ID missing' });
 
-  if (err) return error(res, err.message, 400);
-  return success(res, data, "Profile updated");
+    const { data, error } = await supabase
+      .from('profiles')
+      .upsert(
+        { 
+          device_id: deviceId, // Kunci unik
+          name, 
+          student_id, 
+          email, 
+          bio,
+          updated_at: new Date()
+        }, 
+        { onConflict: 'device_id' }
+      )
+      .select()
+      .single();
+
+    if (error) throw error;
+    return res.json({ data });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
 };

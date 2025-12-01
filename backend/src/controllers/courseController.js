@@ -1,48 +1,84 @@
 import { supabase } from "../config/supabaseClient.js";
 
 export const getCourses = async (req, res) => {
-  const { data, error } = await supabase
-    .from("courses")
-    .select("*")
-    .order("created_at", { ascending: false });
+  try {
+    const deviceId = req.headers['device-id'];
+    
+    const { data, error } = await supabase
+      .from('courses')
+      .select('*')
+      .eq('device_id', deviceId) // Filter: Hanya ambil course milik device ini
+      .order('created_at', { ascending: false });
 
-  if (error) return res.status(500).json({ message: error.message });
-  return res.json({ data });
+    if (error) throw error;
+    return res.json({ data });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
 };
 
 export const createCourse = async (req, res) => {
-  const { name } = req.body;
-  if (!name) return res.status(400).json({ message: "Nama course wajib diisi" });
+  try {
+    const deviceId = req.headers['device-id'];
+    const { name, code, description } = req.body;
 
-  const { data, error } = await supabase
-    .from("courses")
-    .insert([{ name }])
-    .select()
-    .single();
+    if (!name) return res.status(400).json({ message: "Nama course wajib diisi" });
 
-  if (error) return res.status(500).json({ message: error.message });
-  return res.json({ data });
+    const { data, error } = await supabase
+      .from('courses')
+      .insert([
+        { 
+          device_id: deviceId, // Wajib insert device_id
+          name, 
+          code, 
+          description 
+        }
+      ])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return res.json({ data });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
 };
 
 export const updateCourse = async (req, res) => {
-  const { id } = req.params;
-  const { name } = req.body;
+  try {
+    const deviceId = req.headers['device-id'];
+    const { id } = req.params;
+    const { name, code, description } = req.body;
 
-  const { data, error } = await supabase
-    .from("courses")
-    .update({ name })
-    .eq("id", id)
-    .select()
-    .single();
+    const { data, error } = await supabase
+      .from('courses')
+      .update({ name, code, description })
+      .eq('id', id)
+      .eq('device_id', deviceId) // Pastikan milik user sendiri
+      .select()
+      .single();
 
-  if (error) return res.status(500).json({ message: error.message });
-  return res.json({ data });
+    if (error) throw error;
+    return res.json({ data });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
 };
 
 export const deleteCourse = async (req, res) => {
-  const { id } = req.params;
-  const { error } = await supabase.from("courses").delete().eq("id", id);
+  try {
+    const deviceId = req.headers['device-id'];
+    const { id } = req.params;
 
-  if (error) return res.status(500).json({ message: error.message });
-  return res.json({ message: "Berhasil dihapus" });
+    const { error } = await supabase
+      .from('courses')
+      .delete()
+      .eq('id', id)
+      .eq('device_id', deviceId);
+
+    if (error) throw error;
+    return res.json({ message: "Berhasil dihapus" });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
 };

@@ -1,37 +1,38 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useCallback } from "react";
 import { 
   View, Text, Image, StyleSheet, ActivityIndicator, ScrollView, 
-  TouchableOpacity, TextInput, Alert, Platform 
+  TouchableOpacity, TextInput, Alert 
 } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from 'expo-image-picker';
+import { useFocusEffect } from "@react-navigation/native"; 
+
 import theme from "../constants/theme";
 import api from "../services/api";
 
 export default function ProfileScreen() {
-  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   
-  const [form, setForm] = useState({ 
-    name: "", 
-    student_id: "", 
-    major: "", 
-    bio: "",
-    avatar: "" 
-  });
-
-  useEffect(() => { fetchProfile(); }, []);
+  // State terpisah agar kontrol lebih mudah
+  const [name, setName] = useState("");
+  const [studentId, setStudentId] = useState("");
+  const [major, setMajor] = useState("");
+  const [bio, setBio] = useState(""); // 1. PASTIKAN BIO ADA
+  const [avatar, setAvatar] = useState("");
 
   const fetchProfile = async () => {
     try {
       const res = await api.get("/profiles");
-      if (res.data?.data?.[0]) {
-        const data = res.data.data[0];
-        setProfile(data);
-        setForm(data);
+      const data = res.data.data; // Sesuaikan dengan struktur return backend { data: { ... } }
+      
+      if (data) {
+        setName(data.name || "");
+        setStudentId(data.student_id || "");
+        setMajor(data.major || ""); // Note: pastikan di DB ada kolom major, kalau ga ada bisa error
+        setBio(data.bio || "");     // Ambil bio dari DB
       }
     } catch (error) {
       console.log("Error loading profile:", error);
@@ -40,37 +41,34 @@ export default function ProfileScreen() {
     }
   };
 
-  const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') return Alert.alert('Izin', 'Butuh akses galeri.');
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.5,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      setForm({ ...form, avatar: result.assets[0].uri });
-    }
-  };
+  // 2. AMBIL DATA SETIAP KALI LAYAR DIBUKA
+  useFocusEffect(
+    useCallback(() => {
+      fetchProfile();
+    }, [])
+  );
 
   const handleSave = async () => {
-    if (!form.name.trim()) return Alert.alert("Validasi", "Nama wajib diisi.");
+    if (!name.trim()) return Alert.alert("Validasi", "Nama wajib diisi.");
     
     setSaving(true);
     try {
-      if (profile?.id) {
-        await api.put("/profiles", { ...form, id: profile.id });
-      } else {
-        await api.post("/profiles", form);
-      }
-      setProfile(form);
+      // 3. KIRIM PAYLOAD YANG LENGKAP TERMASUK BIO
+      const payload = {
+        name,
+        student_id: studentId,
+        bio,
+        // major: major // Hapus/comment jika di database tidak ada kolom major
+      };
+
+      // Backend kita pakai upsert di endpoint yang sama
+      await api.post("/profiles", payload);
+      
       setIsEditing(false);
       Alert.alert("Berhasil", "Profil diperbarui.");
+      fetchProfile(); // Refresh data
     } catch (error) {
-      Alert.alert("Gagal", "Cek koneksi internet.");
+      Alert.alert("Gagal", "Gagal menyimpan data.");
     } finally {
       setSaving(false);
     }
@@ -78,13 +76,11 @@ export default function ProfileScreen() {
 
   if (loading) return <ActivityIndicator size="large" color={theme.colors.primary} style={{flex:1}} />;
 
-  const display = profile || { name: "Pengguna Baru", student_id: "-", major: "-", bio: "-" };
-  const avatarUri = form.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(form.name||'User')}&background=4A90E2&color=fff&size=200`;
+  const avatarUri = avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name||'User')}&background=4A90E2&color=fff&size=200`;
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       
-      {/* HEADER */}
       <View style={styles.headerNavbar}>
         <View>
           <Text style={styles.headerTitle}>Profil Saya</Text>
@@ -94,32 +90,22 @@ export default function ProfileScreen() {
           style={styles.iconButton}
           onPress={() => isEditing ? setIsEditing(false) : setIsEditing(true)}
         >
-          <Ionicons 
-            name={isEditing ? "close" : "settings-outline"} 
-            size={24} 
-            color={theme.colors.text} 
-          />
+          <Ionicons name={isEditing ? "close" : "settings-outline"} size={24} color={theme.colors.text} />
         </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         
-        {/* Profile Avatar Section */}
         <View style={styles.avatarSection}>
           <View style={styles.avatarWrapper}>
             <Image source={{ uri: avatarUri }} style={styles.avatar} />
-            {isEditing && (
-              <TouchableOpacity style={styles.cameraBadge} onPress={pickImage}>
-                <Ionicons name="camera" size={18} color="white" />
-              </TouchableOpacity>
-            )}
           </View>
           
           {!isEditing ? (
             <View style={styles.centerInfo}>
-              <Text style={styles.displayName}>{display.name}</Text>
+              <Text style={styles.displayName}>{name || "User Baru"}</Text>
               <View style={styles.nimBadge}>
-                <Text style={styles.displayNim}>{display.student_id}</Text>
+                <Text style={styles.displayNim}>{studentId || "-"}</Text>
               </View>
             </View>
           ) : (
@@ -127,52 +113,30 @@ export default function ProfileScreen() {
           )}
         </View>
 
-        {/* Form Fields */}
         <View style={styles.formContainer}>
           <Text style={styles.sectionLabel}>DATA DIRI</Text>
           
           <InputField 
-            label="Nama Lengkap" 
-            value={form.name} 
-            onChange={t => setForm({...form, name: t})} 
-            editable={isEditing} 
-            icon="person-outline"
+            label="Nama Lengkap" value={name} onChange={setName} 
+            editable={isEditing} icon="person-outline"
           />
           <InputField 
-            label="NIM" 
-            value={form.student_id} 
-            onChange={t => setForm({...form, student_id: t})} 
-            editable={isEditing} 
-            keyboardType="numeric"
-            icon="card-outline"
+            label="NIM / Student ID" value={studentId} onChange={setStudentId} 
+            editable={isEditing} keyboardType="numeric" icon="card-outline"
           />
+          {/* <InputField 
+            label="Program Studi" value={major} onChange={setMajor} 
+            editable={isEditing} icon="school-outline"
+          /> 
+          */}
           <InputField 
-            label="Program Studi" 
-            value={form.major} 
-            onChange={t => setForm({...form, major: t})} 
-            editable={isEditing} 
-            icon="school-outline"
-          />
-          <InputField 
-            label="Bio Singkat" 
-            value={form.bio} 
-            onChange={t => setForm({...form, bio: t})} 
-            editable={isEditing} 
-            multiline
-            icon="chatbox-ellipses-outline"
+            label="Bio Singkat" value={bio} onChange={setBio} 
+            editable={isEditing} multiline icon="chatbox-ellipses-outline"
           />
 
           {isEditing && (
-            <TouchableOpacity 
-              style={styles.saveButton} 
-              onPress={handleSave} 
-              disabled={saving}
-            >
-              {saving ? (
-                <ActivityIndicator color="white" />
-              ) : (
-                <Text style={styles.saveButtonText}>Simpan Perubahan</Text>
-              )}
+            <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={saving}>
+              {saving ? <ActivityIndicator color="white" /> : <Text style={styles.saveButtonText}>Simpan Perubahan</Text>}
             </TouchableOpacity>
           )}
         </View>
@@ -205,83 +169,28 @@ const InputField = ({ label, value, onChange, editable, icon, multiline, keyboar
 );
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: theme.colors.background 
-  },
-  
-  // Header Styles
-  headerNavbar: {
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center',
-    paddingHorizontal: 24, 
-    paddingVertical: 20,
-    backgroundColor: theme.colors.background,
-  },
+  container: { flex: 1, backgroundColor: theme.colors.background },
+  headerNavbar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingVertical: 20, backgroundColor: theme.colors.background },
   headerTitle: { fontSize: 28, fontWeight: 'bold', color: theme.colors.text },
   headerSubtitle: { fontSize: 14, color: theme.colors.textMuted, marginTop: 2 },
-  iconButton: {
-    padding: 8,
-    backgroundColor: 'white',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: theme.colors.border
-  },
-
+  iconButton: { padding: 8, backgroundColor: 'white', borderRadius: 12, borderWidth: 1, borderColor: theme.colors.border },
   content: { paddingHorizontal: 24, paddingBottom: 50 },
-  
-  // Avatar Section
-  avatarSection: {
-    alignItems: 'center',
-    marginBottom: 30,
-    marginTop: 10
-  },
+  avatarSection: { alignItems: 'center', marginBottom: 30, marginTop: 10 },
   avatarWrapper: { position: 'relative', marginBottom: 16 },
-  avatar: { 
-    width: 110, 
-    height: 110, 
-    borderRadius: 55, 
-    backgroundColor: '#E2E8F0' // Placeholder color
-  },
-  cameraBadge: {
-    position: 'absolute', bottom: 0, right: 0, backgroundColor: theme.colors.primary,
-    padding: 8, borderRadius: 20, borderWidth: 3, borderColor: theme.colors.background,
-  },
+  avatar: { width: 110, height: 110, borderRadius: 55, backgroundColor: '#E2E8F0' },
   centerInfo: { alignItems: 'center' },
   displayName: { fontSize: 22, fontWeight: 'bold', color: theme.colors.text, marginBottom: 6 },
-  nimBadge: {
-    backgroundColor: theme.colors.primary + '15', // Transparan
-    paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8
-  },
+  nimBadge: { backgroundColor: theme.colors.primary + '15', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8 },
   displayNim: { fontSize: 14, color: theme.colors.primary, fontWeight: '700' },
   editingText: { color: theme.colors.warning, fontWeight: 'bold', fontStyle: 'italic' },
-
-  // Form Styles
-  formContainer: {
-    backgroundColor: 'white', borderRadius: 20, padding: 20,
-    ...theme.shadow.small,
-  },
-  sectionLabel: {
-    fontSize: 12, fontWeight: 'bold', color: theme.colors.textMuted,
-    marginBottom: 20, letterSpacing: 1
-  },
-  
+  formContainer: { backgroundColor: 'white', borderRadius: 20, padding: 20, ...theme.shadow.small },
+  sectionLabel: { fontSize: 12, fontWeight: 'bold', color: theme.colors.textMuted, marginBottom: 20, letterSpacing: 1 },
   inputContainer: { marginBottom: 16 },
   inputLabel: { fontSize: 12, color: theme.colors.text, marginBottom: 6, fontWeight: '600' },
-  inputWrapper: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#F7FAFC',
-    borderRadius: 12, paddingHorizontal: 12, borderWidth: 1, borderColor: '#EDF2F7'
-  },
+  inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F7FAFC', borderRadius: 12, paddingHorizontal: 12, borderWidth: 1, borderColor: '#EDF2F7' },
   inputWrapperActive: { borderColor: theme.colors.primary, backgroundColor: 'white' },
   input: { flex: 1, paddingVertical: 12, fontSize: 15, color: theme.colors.text },
-
-  saveButton: {
-    backgroundColor: theme.colors.primary, padding: 16, borderRadius: 14,
-    alignItems: 'center', marginTop: 10, 
-    shadowColor: theme.colors.primary, shadowOffset: {width:0, height:4}, shadowOpacity:0.2, shadowRadius:8
-  },
+  saveButton: { backgroundColor: theme.colors.primary, padding: 16, borderRadius: 14, alignItems: 'center', marginTop: 10, shadowColor: theme.colors.primary, shadowOffset: {width:0, height:4}, shadowOpacity:0.2, shadowRadius:8 },
   saveButtonText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
-  
   footerVersion: { textAlign: 'center', marginTop: 30, color: theme.colors.textMuted, fontSize: 12 }
 });

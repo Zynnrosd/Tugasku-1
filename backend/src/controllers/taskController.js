@@ -1,97 +1,114 @@
 import { supabase } from "../config/supabaseClient.js";
 
-
-const attachCourseNames = async (tasks) => {
-  if (!Array.isArray(tasks) || tasks.length === 0) return tasks;
-  
-  // collect course_ids
-  const ids = [...new Set(tasks.map(t => t.course_id).filter(Boolean))];
-  
-  if (ids.length === 0) return tasks.map(t => ({ ...t, course_name: null }));
-
-  const { data: courses } = await supabase
-    .from('courses')
-    .select('id, name')
-    .in('id', ids);
-
-  const map = {};
-  (courses || []).forEach(c => { map[c.id] = c.name; });
-
-  // Kembalikan object task dengan tambahan properti course_name & courses (untuk frontend yg butuh courses.name)
-  return tasks.map(t => ({ 
-      ...t, 
-      course_name: t.course_id ? map[t.course_id] || null : null,
-      courses: t.course_id ? { name: map[t.course_id] } : null // Fallback object biar frontend ga error
-  }));
-};
-
 export const getTasks = async (req, res) => {
-  // optional query filters
-  const { status } = req.query;
-  let builder = supabase.from("tasks").select("*").order("created_at", { ascending: false });
-  
-  if (status) builder = builder.eq('status', status);
+  try {
+    const deviceId = req.headers['device-id'];
+    const { status } = req.query;
 
-  const { data, error } = await builder;
-  
-  if (error) return res.status(500).json({ message: error.message });
+    let query = supabase
+      .from("tasks")
+      // Ambil data tasks DAN data courses terkait
+      .select(`
+        *,
+        courses ( id, name, code )
+      `)
+      .eq('device_id', deviceId) // Filter per device
+      .order("due_date", { ascending: true });
+    
+    if (status) {
+      query = query.eq('status', status);
+    }
 
-  const withNames = await attachCourseNames(data);
-  
-  return res.json({ data: withNames }); 
+    const { data, error } = await query;
+
+    if (error) throw error;
+    return res.json({ data });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
 };
 
 export const getTaskById = async (req, res) => {
-  const { id } = req.params;
-  const { data, error } = await supabase
-    .from('tasks')
-    .select('*')
-    .eq('id', id)
-    .single();
+  try {
+    const deviceId = req.headers['device-id'];
+    const { id } = req.params;
 
-  if (error) return res.status(404).json({ message: error.message });
+    const { data, error } = await supabase
+      .from('tasks')
+      .select(`*, courses ( id, name, code )`)
+      .eq('id', id)
+      .eq('device_id', deviceId)
+      .single();
 
-  const [withName] = await attachCourseNames([data]);
-  return res.json({ data: withName });
+    if (error) return res.status(404).json({ message: "Task not found" });
+    return res.json({ data });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
 };
 
 export const createTask = async (req, res) => {
-  const payload = req.body;
-  // defaults
-  payload.priority = payload.priority || 'Medium';
-  payload.status = payload.status || 'Pending';
+  try {
+    const deviceId = req.headers['device-id'];
+    const { title, course_id, description, due_date, priority, status } = req.body;
 
-  const { data, error } = await supabase
-    .from("tasks")
-    .insert([payload])
-    .select();
+    const payload = {
+      device_id: deviceId, // Wajib
+      title,
+      course_id: course_id || null, 
+      description,
+      due_date,
+      priority: priority || 'medium',
+      status: status || 'todo'
+    };
 
-  if (error) return res.status(400).json({ message: error.message });
-  
-  const [created] = data;
-  const [withName] = await attachCourseNames([created]);
-  return res.json({ data: withName });
+    const { data, error } = await supabase
+      .from("tasks")
+      .insert([payload])
+      .select(`*, courses ( id, name, code )`)
+      .single();
+
+    if (error) throw error;
+    return res.json({ data });
+  } catch (err) {
+    return res.status(400).json({ message: err.message });
+  }
 };
 
 export const updateTask = async (req, res) => {
-  const { id } = req.params;
-  const { data, error } = await supabase
-    .from("tasks")
-    .update(req.body)
-    .eq("id", id)
-    .select()
-    .single();
+  try {
+    const deviceId = req.headers['device-id'];
+    const { id } = req.params;
 
-  if (error) return res.status(400).json({ message: error.message });
-  
-  const [withName] = await attachCourseNames([data]);
-  return res.json({ data: withName });
+    const { data, error } = await supabase
+      .from("tasks")
+      .update(req.body)
+      .eq('id', id)
+      .eq('device_id', deviceId)
+      .select(`*, courses ( id, name, code )`)
+      .single();
+
+    if (error) throw error;
+    return res.json({ data });
+  } catch (err) {
+    return res.status(400).json({ message: err.message });
+  }
 };
 
 export const deleteTask = async (req, res) => {
-  const { id } = req.params;
-  const { error } = await supabase.from("tasks").delete().eq("id", id);
-  
-  if (error) return res.status(400).json({ message: error.message });
-  return res.json({ status: "success" });
+  try {
+    const deviceId = req.headers['device-id'];
+    const { id } = req.params;
+
+    const { error } = await supabase
+      .from("tasks")
+      .delete()
+      .eq('id', id)
+      .eq('device_id', deviceId);
+    
+    if (error) throw error;
+    return res.json({ status: "success" });
+  } catch (err) {
+    return res.status(400).json({ message: err.message });
+  }
 };

@@ -1,14 +1,12 @@
 import express from "express";
-import {
-  getProfile,
-  upsertProfile,
-  updateProfile, // Import the new function
-} from "../controllers/profileController.js";
+import { getProfile, updateProfile } from "../controllers/profileController.js";
 
 const router = express.Router();
 
 router.get("/", getProfile);
-router.post("/", upsertProfile);
-router.put("/", updateProfile); // Add PUT route
+
+// Baik Create (POST) maupun Update (PUT) akan ditangani oleh updateProfile (Logic Upsert)
+router.post("/", updateProfile); 
+router.put("/", updateProfile);
 
 export default router;

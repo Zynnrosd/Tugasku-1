@@ -1,318 +1,305 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { 
-  View, 
-  Text, 
-  ScrollView, 
-  TouchableOpacity, 
-  StyleSheet, 
-  RefreshControl, 
-  StatusBar 
+  View, Text, StyleSheet, FlatList, TouchableOpacity, 
+  ActivityIndicator, RefreshControl, Image, ScrollView
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from 'expo-linear-gradient';
+
 import api from "../services/api";
 import theme from "../constants/theme";
 import TaskItem from "../components/TaskItem";
+
 export default function HomeScreen({ navigation }) {
   const [tasks, setTasks] = useState([]);
-  const [stats, setStats] = useState({ total: 0, pending: 0, today: 0, late: 0 });
-  const [upcoming, setUpcoming] = useState([]);
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   
-  // State Tanggal
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [dateList, setDateList] = useState([]);
-  const [tasksByDate, setTasksByDate] = useState([]);
+  // State untuk tanggal yang dipilih di kalender
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
-  // 1. Generate Tanggal
-  useEffect(() => {
-    const dates = [];
-    for (let i = 0; i < 14; i++) {
-      const d = new Date();
-      d.setDate(d.getDate() + i);
-      dates.push({
-        fullDate: d.toISOString().split('T')[0],
-        dayName: d.toLocaleDateString('id-ID', { weekday: 'short' }),
-        dayNumber: d.getDate(),
-      });
+  // =================================================================
+  // 1. LOGIKA STATISTIK DASHBOARD (4 KOTAK)
+  // =================================================================
+  const getStats = () => {
+    const total = tasks.length;
+    const completed = tasks.filter(t => t.status === 'Done' || t.status === 'Completed').length;
+    const pending = total - completed;
+    
+    // Hitung terlambat (Logic sama persis dengan TaskItem)
+    const overdue = tasks.filter(t => {
+      if (!t.due_date) return false;
+      const isDone = t.status === 'Done' || t.status === 'Completed';
+      // Cek apakah tanggal deadline < sekarang DAN belum selesai
+      return new Date(t.due_date) < new Date() && !isDone;
+    }).length;
+
+    return { total, completed, pending, overdue };
+  };
+
+  const stats = getStats();
+
+  // =================================================================
+  // 2. GENERATE KALENDER & FILTER DATA
+  // =================================================================
+  const generateCalendarDays = () => {
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() + i);
+      days.push(date);
     }
-    setDateList(dates);
-  }, []);
+    return days;
+  };
+  const calendarDays = generateCalendarDays();
 
-  // 2. Load Data dari Backend
-  const loadData = async () => {
+  // Filter tugas berdasarkan tanggal yang dipilih di kalender
+  const getFilteredTasks = () => {
+    const selectedDateStr = selectedDate.toISOString().split('T')[0];
+
+    return tasks.filter(task => {
+      if (!task.due_date) return false;
+      const taskDateStr = task.due_date.split('T')[0];
+      return taskDateStr === selectedDateStr;
+    });
+  };
+
+  const filteredTasks = getFilteredTasks();
+
+  // =================================================================
+  // 3. FETCH DATA API
+  // =================================================================
+  const fetchData = async () => {
     try {
-      const res = await api.get("/tasks");
-      const allTasks = res.data.data || [];
-      
-      // Hitung Statistik (Client Side)
-      const pending = allTasks.filter(t => t.status !== 'Done' && t.status !== 'Completed');
-      const todayStr = new Date().toISOString().split('T')[0];
-      
-      setStats({
-        total: allTasks.length,
-        pending: pending.length,
-        today: pending.filter(t => t.deadline === todayStr).length,
-        late: pending.filter(t => t.deadline < todayStr).length
-      });
+      const tasksRes = await api.get("/tasks");
+      setTasks(tasksRes.data.data || []);
 
-      // Filter Top 3 Prioritas Mendesak
-      const top3 = [...pending]
-        .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
-        .slice(0, 3);
-      setUpcoming(top3);
-
-      // Simpan data master & filter default sesuai tanggal terpilih
-      setTasks(pending);
-      filterByDate(pending, selectedDate);
-
+      const profileRes = await api.get("/profiles");
+      if (profileRes.data.data) {
+        setProfile(profileRes.data.data);
+      }
     } catch (error) {
-      console.log("Error loading tasks:", error);
+      console.log("Error fetching data:", error);
     } finally {
+      setLoading(false);
       setRefreshing(false);
     }
   };
 
-  // 3. Logika Filter Tanggal
-  const filterByDate = (taskList, date) => {
-    const filtered = taskList.filter(t => t.deadline === date);
-    setTasksByDate(filtered);
-  };
-
-  // Handler Tombol Tanggal
-  const handleDatePress = (date) => {
-    setSelectedDate(date);
-    filterByDate(tasks, date);
-  };
-
-  // Handler Tombol Tugas (Navigasi ke Detail)
-  const handleTaskPress = (item) => {
-    navigation.navigate("TaskDetail", { task: item });
-  };
-
-  // Refresh saat layar fokus
-  useFocusEffect(useCallback(() => { loadData(); }, []));
-
-  // --- Komponen UI Kecil ---
-  const StatCard = ({ label, count, color, icon }) => (
-    <View style={[styles.statCard, { borderLeftColor: color }]}>
-      <View>
-        <Text style={styles.statCount}>{count}</Text>
-        <Text style={styles.statLabel}>{label}</Text>
-      </View>
-      <View style={[styles.iconBg, { backgroundColor: color + '20' }]}>
-        <Ionicons name={icon} size={24} color={color} />
-      </View>
-    </View>
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [])
   );
 
-  return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
-      
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl 
-            refreshing={refreshing} 
-            onRefresh={() => { setRefreshing(true); loadData(); }} 
-            colors={[theme.colors.primary]}
-          />
-        }
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchData();
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
+  }
+
+  const avatarUri = profile?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.name||'User')}&background=4A90E2&color=fff`;
+
+  // Render item Kalender
+  const renderCalendarItem = ({ item }) => {
+    const isSelected = item.toDateString() === selectedDate.toDateString();
+    return (
+      <TouchableOpacity 
+        style={[styles.calItem, isSelected && styles.calItemSelected]} 
+        onPress={() => setSelectedDate(item)}
       >
-        {/* Header */}
-        <View style={styles.headerSection}>
-            <Text style={theme.text.header}>Halo ! 👋</Text>
-            <Text style={theme.text.subtitle}>Siap menyelesaikan tugas hari ini?</Text>
-        </View>
+        <Text style={[styles.calDay, isSelected && styles.calTextSelected]}>
+          {item.toLocaleDateString('id-ID', { weekday: 'short' })}
+        </Text>
+        <Text style={[styles.calDate, isSelected && styles.calTextSelected]}>
+          {item.getDate()}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
 
-        {/* Statistik Grid */}
-        <View style={styles.statsContainer}>
-            <StatCard label="Sisa Tugas" count={stats.pending} color={theme.colors.primary} icon="layers" />
-            <StatCard label="Deadline Hari Ini" count={stats.today} color={theme.colors.warning} icon="calendar" />
-            <StatCard label="Terlambat" count={stats.late} color={theme.colors.danger} icon="alert-circle" />
-            <StatCard label="Selesai" count={stats.total - stats.pending} color={theme.colors.success} icon="checkbox" />
-        </View>
-
-        {/* Date Slider */}
-        <View style={styles.sectionHeader}>
-          <Text style={theme.text.title}>Jadwal Tugas</Text>
-          <TouchableOpacity onPress={() => navigation.navigate("Tasks")}> 
-             <Text style={styles.seeAllText}>Lihat Semua</Text>
+  return (
+    <SafeAreaView style={styles.container} edges={['top']}>
+      
+      {/* ScrollView Utama agar Dashboard ikut terscroll jika layar kecil */}
+      <ScrollView 
+        contentContainerStyle={{ paddingBottom: 100 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        showsVerticalScrollIndicator={false}
+      >
+        
+        {/* HEADER */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.greeting}>Halo, {profile?.name || "Mahasiswa"}</Text>
+            <Text style={styles.subGreeting}>Semangat kuliahnya hari ini! 🚀</Text>
+          </View>
+          <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
+             <Image source={{ uri: avatarUri }} style={styles.avatar} />
           </TouchableOpacity>
         </View>
 
-        <View style={styles.dateSliderContainer}>
-             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 4 }}>
-                {dateList.map((item, index) => {
-                    const isActive = item.fullDate === selectedDate;
-                    return (
-                        <TouchableOpacity 
-                            key={index} 
-                            activeOpacity={0.7}
-                            style={[styles.dateItem, isActive && styles.dateItemActive]}
-                            onPress={() => handleDatePress(item.fullDate)}
-                        >
-                            <Text style={[styles.dayName, isActive ? styles.textWhite : styles.textGrey]}>
-                              {item.dayName}
-                            </Text>
-                            <Text style={[styles.dayNumber, isActive ? styles.textWhite : styles.textDark]}>
-                              {item.dayNumber}
-                            </Text>
-                            {isActive && <View style={styles.activeDot} />}
-                        </TouchableOpacity>
-                    )
-                })}
-             </ScrollView>
+        {/* --- KEMBALINYA 4 KOTAK ANALISIS --- */}
+        <View style={styles.statsGrid}>
+          <StatBox 
+            label="Total Tugas" 
+            count={stats.total} 
+            icon="albums-outline" 
+            color="#4F46E5" 
+            bg="#EEF2FF" 
+          />
+          <StatBox 
+            label="Selesai" 
+            count={stats.completed} 
+            icon="checkmark-circle-outline" 
+            color="#10B981" 
+            bg="#ECFDF5" 
+          />
+          <StatBox 
+            label="Pending" 
+            count={stats.pending} 
+            icon="time-outline" 
+            color="#F59E0B" 
+            bg="#FFFBEB" 
+          />
+          <StatBox 
+            label="Terlambat" 
+            count={stats.overdue} 
+            icon="alert-circle-outline" 
+            color="#EF4444" 
+            bg="#FEF2F2" 
+          />
         </View>
 
-        {/* Task List (By Date) */}
+        {/* KALENDER HORIZONTAL */}
+        <View style={styles.calendarContainer}>
+          <Text style={styles.sectionTitle}>Jadwal Minggu Ini</Text>
+          <FlatList
+            data={calendarDays}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => item.toString()}
+            renderItem={renderCalendarItem}
+            contentContainerStyle={{ gap: 10, paddingVertical: 10 }}
+          />
+        </View>
+
+        {/* LIST TUGAS HARIAN */}
         <View style={styles.taskListContainer}>
-          {tasksByDate.length > 0 ? (
-              tasksByDate.map(item => (
-                  <TaskItem 
-                    key={item.id} 
-                    task={item} 
-                    onPress={() => handleTaskPress(item)} 
-                  />
-              ))
+          <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', marginBottom:10}}>
+             <Text style={styles.sectionTitle}>
+               Tugas Tanggal {selectedDate.getDate()}
+             </Text>
+             <Text style={{fontSize:12, color:theme.colors.textMuted}}>
+               {filteredTasks.length} Tugas
+             </Text>
+          </View>
+
+          {filteredTasks.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="beer-outline" size={48} color="#CBD5E0" />
+              <Text style={styles.emptyText}>Tidak ada deadline hari ini.</Text>
+              <Text style={styles.emptySubText}>Santai sejenak!</Text>
+            </View>
           ) : (
-              <View style={styles.emptyState}>
-                  <Ionicons name="leaf-outline" size={40} color={theme.colors.border} />
-                  <Text style={styles.emptyText}>Tidak ada deadline tanggal ini.</Text>
-              </View>
+            filteredTasks.map(item => (
+              <TaskItem 
+                key={item.id}
+                task={item} 
+                onPress={() => navigation.navigate("TaskDetail", { task: item })} 
+              />
+            ))
           )}
         </View>
 
-        {/* Prioritas Mendesak */}
-        {upcoming.length > 0 && (
-          <>
-            <Text style={[theme.text.title, { marginTop: 24, marginBottom: 12 }]}>
-              Prioritas Mendesak 🔥
-            </Text>
-            {upcoming.map(item => (
-                <TaskItem 
-                  key={'up'+item.id} 
-                  task={item} 
-                  onPress={() => handleTaskPress(item)} 
-                />
-            ))}
-          </>
-        )}
-        
       </ScrollView>
+
+      {/* FAB ADD BUTTON */}
+      <TouchableOpacity 
+        style={styles.fab} 
+        onPress={() => navigation.navigate("AddTask")}
+      >
+        <Ionicons name="add" size={28} color="white" />
+      </TouchableOpacity>
+
     </SafeAreaView>
   );
 }
 
+// Komponen Kecil untuk Kotak Statistik
+const StatBox = ({ label, count, icon, color, bg }) => (
+  <View style={[styles.statCard, { backgroundColor: bg }]}>
+    <View style={styles.statIconRow}>
+      <Ionicons name={icon} size={20} color={color} />
+      <Text style={[styles.statCount, { color: color }]}>{count}</Text>
+    </View>
+    <Text style={styles.statLabel}>{label}</Text>
+  </View>
+);
+
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: theme.colors.background 
-  },
-  scrollContent: { 
-    padding: 24, 
-    paddingBottom: 100 
-  },
-  headerSection: { 
-    marginBottom: 24 
-  },
+  container: { flex: 1, backgroundColor: theme.colors.background },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   
-  // Statistik
-  statsContainer: { 
-    flexDirection: 'row', 
-    flexWrap: 'wrap', 
-    justifyContent: 'space-between', 
-    gap: 12, 
-    marginBottom: 30 
+  header: { 
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', 
+    paddingHorizontal: 20, paddingVertical: 15,
+  },
+  greeting: { fontSize: 20, fontWeight: 'bold', color: theme.colors.text },
+  subGreeting: { fontSize: 14, color: theme.colors.textMuted },
+  avatar: { width: 45, height: 45, borderRadius: 22.5, backgroundColor:'#eee' },
+
+  // Styles untuk Statistik Grid
+  statsGrid: {
+    flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between',
+    paddingHorizontal: 20, marginBottom: 20, gap: 10
   },
   statCard: {
-      width: '48%', 
-      backgroundColor: theme.colors.surface, 
-      padding: 16, 
-      borderRadius: 16,
-      flexDirection: 'row', 
-      justifyContent: 'space-between', 
-      alignItems: 'center',
-      borderLeftWidth: 4, 
-      // Shadow Styles
-      ...theme.shadow
+    width: '48%', // Agar jadi 2 kolom
+    padding: 12, borderRadius: 16,
+    justifyContent: 'center'
   },
-  statCount: { 
-    fontSize: 24, 
-    fontWeight: 'bold', 
-    color: theme.colors.text 
+  statIconRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6
   },
-  statLabel: { 
-    fontSize: 12, 
-    color: theme.colors.subtext, 
-    marginTop: 4, 
-    fontWeight: '500' 
-  },
-  iconBg: { 
-    padding: 10, 
-    borderRadius: 12 
-  },
+  statCount: { fontSize: 20, fontWeight: 'bold' },
+  statLabel: { fontSize: 12, color: '#6B7280', fontWeight: '500' },
 
-  // Date Slider Styles
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16
-  },
-  seeAllText: {
-    color: theme.colors.primary,
-    fontWeight: '600'
-  },
-  dateSliderContainer: { 
-    height: 90, 
-    marginBottom: 10 
-  },
-  dateItem: { 
-      backgroundColor: theme.colors.surface, 
-      width: 60, 
-      height: 80, 
-      marginRight: 12, 
-      borderRadius: 16, 
-      justifyContent: 'center', 
-      alignItems: 'center', 
-      borderWidth: 1, 
-      borderColor: theme.colors.border
-  },
-  dateItemActive: { 
-    backgroundColor: theme.colors.primary, 
-    borderColor: theme.colors.primary,
-    transform: [{scale: 1.05}]
-  },
-  dayName: { fontSize: 12, marginBottom: 4, fontWeight: '600' },
-  dayNumber: { fontSize: 20, fontWeight: 'bold' },
-  textWhite: { color: 'white' },
-  textGrey: { color: theme.colors.subtext },
-  textDark: { color: theme.colors.text },
-  activeDot: {
-    width: 4, height: 4, borderRadius: 2, backgroundColor: 'white', marginTop: 4
-  },
+  calendarContainer: { paddingLeft: 20, marginBottom: 10 },
+  sectionTitle: { fontSize: 16, fontWeight: 'bold', color: theme.colors.text, marginBottom: 5 },
   
-  // List & Empty State
-  taskListContainer: {
-    minHeight: 100
+  calItem: {
+    backgroundColor: 'white', padding: 10, borderRadius: 12, alignItems: 'center',
+    minWidth: 50, borderWidth: 1, borderColor: '#EDF2F7'
   },
-  emptyState: { 
-    padding: 30, 
-    alignItems: 'center', 
-    justifyContent: 'center',
-    borderWidth: 2, 
-    borderColor: theme.colors.border, 
-    borderRadius: 16, 
-    borderStyle: 'dashed',
-    backgroundColor: theme.colors.surface + '80'
+  calItemSelected: {
+    backgroundColor: theme.colors.primary, borderColor: theme.colors.primary
   },
-  emptyText: {
-    color: theme.colors.subtext,
-    marginTop: 8,
-    fontStyle: 'italic'
+  calDay: { fontSize: 12, color: theme.colors.textMuted, marginBottom: 4 },
+  calDate: { fontSize: 16, fontWeight: 'bold', color: theme.colors.text },
+  calTextSelected: { color: 'white' },
+
+  taskListContainer: { paddingHorizontal: 20, flex: 1 },
+  
+  emptyState: { alignItems: 'center', marginTop: 30, paddingBottom: 50 },
+  emptyText: { marginTop: 10, fontSize: 16, fontWeight: 'bold', color: theme.colors.textMuted },
+  emptySubText: { fontSize: 14, color: theme.colors.textMuted },
+
+  fab: {
+    position: 'absolute', bottom: 30, right: 30,
+    backgroundColor: theme.colors.primary,
+    width: 56, height: 56, borderRadius: 28,
+    justifyContent: 'center', alignItems: 'center',
+    shadowColor: theme.colors.primary, shadowOffset: {width:0, height:4}, shadowOpacity: 0.3, shadowRadius: 4, elevation: 5
   }
 });
