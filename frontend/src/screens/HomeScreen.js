@@ -53,32 +53,42 @@ export default function HomeScreen({ navigation }) {
   const stats = getStats();
 
   // =================================================================
-  // 2. GENERATE KALENDER & FILTER DATA
-  // =================================================================
-  const generateCalendarDays = () => {
-    const days = [];
-    for (let i = 0; i < 7; i++) {
-      const date = new Date();
-      date.setDate(date.getDate() + i);
-      days.push(date);
-    }
-    return days;
-  };
-  const calendarDays = generateCalendarDays();
+// 2. GENERATE KALENDER & FILTER DATA (DIPERBAIKI)
+// =================================================================
+// Filter tugas berdasarkan tanggal DAN status (FIXED)
+const getFilteredTasks = () => {
+  const selectedDateStr = selectedDate.toISOString().split('T')[0];
 
-  // Filter tugas berdasarkan tanggal yang dipilih di kalender
-  const getFilteredTasks = () => {
-    const selectedDateStr = selectedDate.toISOString().split('T')[0];
+  return tasks.filter(task => {
+    // Abaikan tugas tanpa due_date
+    if (!task.due_date) return false;
 
-    return tasks.filter(task => {
-      if (!task.due_date) return false;
-      const taskDateStr = task.due_date.split('T')[0];
-      return taskDateStr === selectedDateStr;
-    });
-  };
+    const taskDateStr = task.due_date.split('T')[0];
+    
+    // 1. Cek apakah tanggalnya sama dengan yang dipilih
+    const isSameDate = taskDateStr === selectedDateStr;
+    
+    // 2. Cek apakah statusnya BELUM 'Done' atau 'Completed'
+    const isNotFinished = task.status !== 'Done' && task.status !== 'Completed';
 
-  const filteredTasks = getFilteredTasks();
+    // Tugas tampil jika tanggalnya sama DAN belum selesai
+    return isSameDate && isNotFinished;
+  });
+};
 
+const filteredTasks = getFilteredTasks();
+const generateCalendarDays = () => {
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const date = new Date();
+    date.setDate(date.getDate() + i);
+    days.push(date);
+  }
+  return days;
+};
+
+// Deklarasikan variabel calendarDays di sini
+const calendarDays = generateCalendarDays();
   // =================================================================
   // 3. FETCH DATA API
   // =================================================================

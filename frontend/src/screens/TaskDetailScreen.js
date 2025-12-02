@@ -37,20 +37,23 @@ export default function TaskDetailScreen({ route, navigation }) {
 
   // 2. ANALISIS FIX: Fungsi update status ke 'Done'
   const handleComplete = async () => {
-    try {
-      setLoading(true);
-      // Kirim update ke backend
-      await taskService.update(task.id, { 
-        ...task, 
-        status: 'Done' 
-      });
-      navigation.goBack();
-    } catch (error) {
-      Alert.alert("Gagal", "Gagal mengupdate status.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    try {
+      setLoading(true);
+      
+      // PERBAIKAN KRITIS: HANYA KIRIM FIELD YANG INGIN DIUBAH (status)
+      await taskService.update(task.id, { 
+        status: 'Done' // Kirim data bersih
+      });
+      
+      // navigate.goBack() memicu useFocusEffect di Home/Tasks Screen
+      navigation.goBack();
+    } catch (error) {
+      console.log(error);
+      Alert.alert("Gagal", "Gagal mengupdate status.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formattedDate = task.due_date 
     ? new Date(task.due_date).toLocaleDateString('id-ID', { 

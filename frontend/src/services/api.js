@@ -6,7 +6,7 @@ import { Platform } from 'react-native';
 // 1. KONFIGURASI URL
 // =================================================================
 const VERCEL_URL = "https://tugasku-1.vercel.app/"; 
-const LOCAL_URL = "http://192.168.1.4:5000/api"; 
+const LOCAL_URL = "http://192.168.0.112:5000/api"; 
 
 // Logika: Jika mode development, pakai LOCAL. Jika build (APK), pakai VERCEL.
 const BASE_URL = __DEV__ ? LOCAL_URL : VERCEL_URL;
