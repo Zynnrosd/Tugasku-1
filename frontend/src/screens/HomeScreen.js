@@ -22,19 +22,29 @@ export default function HomeScreen({ navigation }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   // =================================================================
-  // 1. LOGIKA STATISTIK DASHBOARD (4 KOTAK)
+  // 1. LOGIKA STATISTIK DASHBOARD (DIPERBAIKI)
   // =================================================================
   const getStats = () => {
     const total = tasks.length;
     const completed = tasks.filter(t => t.status === 'Done' || t.status === 'Completed').length;
     const pending = total - completed;
     
-    // Hitung terlambat (Logic sama persis dengan TaskItem)
+    // PERBAIKAN DISINI: Samakan logika tanggal overdue dengan TaskItem
     const overdue = tasks.filter(t => {
+      // 1. Cek validasi dasar
       if (!t.due_date) return false;
       const isDone = t.status === 'Done' || t.status === 'Completed';
-      // Cek apakah tanggal deadline < sekarang DAN belum selesai
-      return new Date(t.due_date) < new Date() && !isDone;
+      
+      // 2. Normalisasi tanggal (Set jam ke 00:00:00 untuk perbandingan adil)
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+
+      const dueDate = new Date(t.due_date);
+      dueDate.setHours(0, 0, 0, 0);
+
+      // 3. Hanya dianggap overdue jika Tanggal Deadline < Hari Ini (Kemarin dst)
+      //    DAN statusnya belum selesai
+      return dueDate < now && !isDone;
     }).length;
 
     return { total, completed, pending, overdue };
