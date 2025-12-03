@@ -22,28 +22,23 @@ export default function HomeScreen({ navigation }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   // =================================================================
-  // 1. LOGIKA STATISTIK DASHBOARD (DIPERBAIKI)
+  // LOGIKA STATISTIK DASHBOARD (Dipertahankan)
   // =================================================================
   const getStats = () => {
     const total = tasks.length;
     const completed = tasks.filter(t => t.status === 'Done' || t.status === 'Completed').length;
     const pending = total - completed;
     
-    // PERBAIKAN DISINI: Samakan logika tanggal overdue dengan TaskItem
     const overdue = tasks.filter(t => {
-      // 1. Cek validasi dasar
       if (!t.due_date) return false;
       const isDone = t.status === 'Done' || t.status === 'Completed';
       
-      // 2. Normalisasi tanggal (Set jam ke 00:00:00 untuk perbandingan adil)
       const now = new Date();
       now.setHours(0, 0, 0, 0);
 
       const dueDate = new Date(t.due_date);
       dueDate.setHours(0, 0, 0, 0);
 
-      // 3. Hanya dianggap overdue jika Tanggal Deadline < Hari Ini (Kemarin dst)
-      //    DAN statusnya belum selesai
       return dueDate < now && !isDone;
     }).length;
 
@@ -53,44 +48,38 @@ export default function HomeScreen({ navigation }) {
   const stats = getStats();
 
   // =================================================================
-// 2. GENERATE KALENDER & FILTER DATA (DIPERBAIKI)
-// =================================================================
-// Filter tugas berdasarkan tanggal DAN status (FIXED)
-const getFilteredTasks = () => {
-  const selectedDateStr = selectedDate.toISOString().split('T')[0];
-
-  return tasks.filter(task => {
-    // Abaikan tugas tanpa due_date
-    if (!task.due_date) return false;
-
-    const taskDateStr = task.due_date.split('T')[0];
-    
-    // 1. Cek apakah tanggalnya sama dengan yang dipilih
-    const isSameDate = taskDateStr === selectedDateStr;
-    
-    // 2. Cek apakah statusnya BELUM 'Done' atau 'Completed'
-    const isNotFinished = task.status !== 'Done' && task.status !== 'Completed';
-
-    // Tugas tampil jika tanggalnya sama DAN belum selesai
-    return isSameDate && isNotFinished;
-  });
-};
-
-const filteredTasks = getFilteredTasks();
-const generateCalendarDays = () => {
-  const days = [];
-  for (let i = 0; i < 7; i++) {
-    const date = new Date();
-    date.setDate(date.getDate() + i);
-    days.push(date);
-  }
-  return days;
-};
-
-// Deklarasikan variabel calendarDays di sini
-const calendarDays = generateCalendarDays();
+  // GENERATE KALENDER & FILTER DATA (Dipertahankan)
   // =================================================================
-  // 3. FETCH DATA API
+  const getFilteredTasks = () => {
+    const selectedDateStr = selectedDate.toISOString().split('T')[0];
+
+    return tasks.filter(task => {
+      if (!task.due_date) return false;
+
+      const taskDateStr = task.due_date.split('T')[0];
+      
+      const isSameDate = taskDateStr === selectedDateStr;
+      const isNotFinished = task.status !== 'Done' && task.status !== 'Completed';
+
+      return isSameDate && isNotFinished;
+    });
+  };
+
+  const filteredTasks = getFilteredTasks();
+  const generateCalendarDays = () => {
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() + i);
+      days.push(date);
+    }
+    return days;
+  };
+
+  const calendarDays = generateCalendarDays();
+
+  // =================================================================
+  // FETCH DATA API (Dipertahankan)
   // =================================================================
   const fetchData = async () => {
     try {
@@ -128,7 +117,8 @@ const calendarDays = generateCalendarDays();
     );
   }
 
-  const avatarUri = profile?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.name||'User')}&background=4A90E2&color=fff`;
+  // Menggunakan warna primary baru untuk avatar fallback
+  const avatarUri = profile?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.name||'User')}&background=${theme.colors.primary.substring(1)}&color=fff`;
 
   // Render item Kalender
   const renderCalendarItem = ({ item }) => {
@@ -169,35 +159,35 @@ const calendarDays = generateCalendarDays();
           </TouchableOpacity>
         </View>
 
-        {/* --- KEMBALINYA 4 KOTAK ANALISIS --- */}
+        {/* --- KOTAK ANALISIS (Menggunakan warna tema baru) --- */}
         <View style={styles.statsGrid}>
           <StatBox 
             label="Total Tugas" 
             count={stats.total} 
             icon="albums-outline" 
-            color="#4F46E5" 
-            bg="#EEF2FF" 
+            color={theme.colors.primaryDark} 
+            bg={theme.colors.primaryLight} 
           />
           <StatBox 
             label="Selesai" 
             count={stats.completed} 
             icon="checkmark-circle-outline" 
-            color="#10B981" 
-            bg="#ECFDF5" 
+            color={theme.colors.success} 
+            bg={theme.colors.success + '10'} 
           />
           <StatBox 
             label="Pending" 
             count={stats.pending} 
             icon="time-outline" 
-            color="#F59E0B" 
-            bg="#FFFBEB" 
+            color={theme.colors.warning} 
+            bg={theme.colors.warning + '10'} 
           />
           <StatBox 
             label="Terlambat" 
             count={stats.overdue} 
             icon="alert-circle-outline" 
-            color="#EF4444" 
-            bg="#FEF2F2" 
+            color={theme.colors.danger} 
+            bg={theme.colors.danger + '10'} 
           />
         </View>
 
@@ -233,7 +223,7 @@ const calendarDays = generateCalendarDays();
             </View>
           ) : (
             filteredTasks.map(item => (
-              <TaskItem 
+              <TaskItem // Menggunakan TaskItem yang sudah di-redesign
                 key={item.id}
                 task={item} 
                 onPress={() => navigation.navigate("TaskDetail", { task: item })} 
@@ -244,12 +234,19 @@ const calendarDays = generateCalendarDays();
 
       </ScrollView>
 
-      {/* FAB ADD BUTTON */}
+      {/* FAB ADD BUTTON - Menggunakan LinearGradient Ungu */}
       <TouchableOpacity 
-        style={styles.fab} 
+        style={styles.fabContainer} 
         onPress={() => navigation.navigate("AddTask")}
       >
-        <Ionicons name="add" size={28} color="white" />
+         <LinearGradient
+            colors={theme.gradients.deepPurple} // Gradient Ungu
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.fab}
+          >
+            <Ionicons name="add" size={28} color="white" />
+          </LinearGradient>
       </TouchableOpacity>
 
     </SafeAreaView>
@@ -258,7 +255,7 @@ const calendarDays = generateCalendarDays();
 
 // Komponen Kecil untuk Kotak Statistik
 const StatBox = ({ label, count, icon, color, bg }) => (
-  <View style={[styles.statCard, { backgroundColor: bg }]}>
+  <View style={[styles.statCard, { backgroundColor: bg, borderColor: color + '30', borderWidth: 1 }]}>
     <View style={styles.statIconRow}>
       <Ionicons name={icon} size={20} color={color} />
       <Text style={[styles.statCount, { color: color }]}>{count}</Text>
@@ -277,7 +274,7 @@ const styles = StyleSheet.create({
   },
   greeting: { fontSize: 20, fontWeight: 'bold', color: theme.colors.text },
   subGreeting: { fontSize: 14, color: theme.colors.textMuted },
-  avatar: { width: 45, height: 45, borderRadius: 22.5, backgroundColor:'#eee' },
+  avatar: { width: 45, height: 45, borderRadius: 22.5, backgroundColor: theme.colors.primaryLight },
 
   // Styles untuk Statistik Grid
   statsGrid: {
@@ -285,25 +282,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20, marginBottom: 20, gap: 10
   },
   statCard: {
-    width: '48%', // Agar jadi 2 kolom
-    padding: 12, borderRadius: 16,
-    justifyContent: 'center'
+    width: '48%', 
+    padding: 16, 
+    borderRadius: theme.radius.l,
+    justifyContent: 'center',
+    ...theme.shadow.small 
   },
   statIconRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6
   },
-  statCount: { fontSize: 20, fontWeight: 'bold' },
-  statLabel: { fontSize: 12, color: '#6B7280', fontWeight: '500' },
+  statCount: { fontSize: 22, fontWeight: '800' },
+  statLabel: { fontSize: 12, color: theme.colors.textMuted, fontWeight: '600' },
 
   calendarContainer: { paddingLeft: 20, marginBottom: 10 },
-  sectionTitle: { fontSize: 16, fontWeight: 'bold', color: theme.colors.text, marginBottom: 5 },
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: theme.colors.text, marginBottom: 5 },
   
   calItem: {
-    backgroundColor: 'white', padding: 10, borderRadius: 12, alignItems: 'center',
-    minWidth: 50, borderWidth: 1, borderColor: '#EDF2F7'
+    backgroundColor: theme.colors.card, 
+    padding: 10, borderRadius: theme.radius.m, 
+    alignItems: 'center',
+    minWidth: 55, 
+    borderWidth: 1, 
+    borderColor: theme.colors.border,
+    ...theme.shadow.small
   },
   calItemSelected: {
-    backgroundColor: theme.colors.primary, borderColor: theme.colors.primary
+    backgroundColor: theme.colors.primary, 
+    borderColor: theme.colors.primary
   },
   calDay: { fontSize: 12, color: theme.colors.textMuted, marginBottom: 4 },
   calDate: { fontSize: 16, fontWeight: 'bold', color: theme.colors.text },
@@ -315,11 +320,16 @@ const styles = StyleSheet.create({
   emptyText: { marginTop: 10, fontSize: 16, fontWeight: 'bold', color: theme.colors.textMuted },
   emptySubText: { fontSize: 14, color: theme.colors.textMuted },
 
+  fabContainer: {
+    position: 'absolute', 
+    bottom: 30, 
+    right: 30,
+    zIndex: 10, // Ditambahkan: Memastikan FAB di layer teratas
+  },
   fab: {
-    position: 'absolute', bottom: 30, right: 30,
-    backgroundColor: theme.colors.primary,
     width: 56, height: 56, borderRadius: 28,
     justifyContent: 'center', alignItems: 'center',
-    shadowColor: theme.colors.primary, shadowOffset: {width:0, height:4}, shadowOpacity: 0.3, shadowRadius: 4, elevation: 5
+    ...theme.shadow.large, 
+    shadowColor: theme.colors.primary, 
   }
 });

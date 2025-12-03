@@ -1,36 +1,79 @@
 import React from 'react';
-import { TouchableOpacity, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import theme from '../constants/theme';
 
-export default function Button({ title, onPress, loading, variant = 'primary', style }) {
-  const backgroundColor = variant === 'danger' ? theme.colors.danger : theme.colors.primary;
+export default function Button({ title, onPress, style, textStyle, loading, variant = 'primary' }) {
+  if (variant === 'primary') {
+    return (
+      <TouchableOpacity 
+        onPress={loading ? null : onPress} 
+        style={[styles.container, style]}
+        activeOpacity={0.7}
+        disabled={loading}
+      >
+        <LinearGradient
+          colors={theme.gradients.deepPurple} // Menggunakan deepPurple gradient untuk tombol primer
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={[styles.button, styles.primaryButton]}
+        >
+          {loading ? (
+            <ActivityIndicator color={theme.colors.white} />
+          ) : (
+            <Text style={[styles.text, styles.primaryText, textStyle]}>{title}</Text>
+          )}
+        </LinearGradient>
+      </TouchableOpacity>
+    );
+  }
   
+  // Contoh tombol sekunder
   return (
-    <TouchableOpacity
-      style={[styles.button, { backgroundColor }, style]}
-      onPress={onPress}
+    <TouchableOpacity 
+      onPress={loading ? null : onPress} 
+      style={[styles.container, styles.secondaryButton, style]}
+      activeOpacity={0.7}
       disabled={loading}
     >
       {loading ? (
-        <ActivityIndicator color="white" />
+        <ActivityIndicator color={theme.colors.text} />
       ) : (
-        <Text style={styles.text}>{title}</Text>
+        <Text style={[styles.text, styles.secondaryText, textStyle]}>{title}</Text>
       )}
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
+  container: { 
+    borderRadius: theme.radius.l, 
+    overflow: 'hidden',
+    width: '100%',
+  },
   button: {
-    paddingVertical: 15,
-    borderRadius: theme.radius.m,
+    paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    ...theme.shadow, // Pakai shadow standar
+  },
+  primaryButton: {
+    ...theme.shadow.medium, // Memberi shadow khas tombol utama
+    shadowColor: theme.colors.primary,
+  },
+  secondaryButton: {
+    backgroundColor: theme.colors.card,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    ...theme.shadow.small
   },
   text: {
-    color: 'white',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
+  primaryText: {
+    color: theme.colors.white,
+  },
+  secondaryText: {
+    color: theme.colors.text,
+  }
 });

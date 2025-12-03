@@ -1,61 +1,70 @@
-import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import theme from "../constants/theme";
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import theme from '../constants/theme';
 
-const options = ["High", "Medium", "Low"];
+const PRIORITY_OPTIONS = [
+  { value: 'High', label: 'Mendesak', color: theme.colors.danger, icon: 'flash' },
+  { value: 'Medium', label: 'Menengah', color: theme.colors.warning, icon: 'time' },
+  { value: 'Low', label: 'Santai', color: theme.colors.success, icon: 'leaf' },
+];
+
+const PriorityChip = ({ item, isSelected, onPress }) => (
+  <TouchableOpacity 
+    style={[
+      styles.chip,
+      isSelected ? { backgroundColor: item.color + '15', borderColor: item.color } : styles.chipDefault
+    ]} 
+    onPress={onPress}
+  >
+    <Ionicons name={item.icon} size={16} color={isSelected ? item.color : theme.colors.textMuted} />
+    <Text style={[styles.chipText, isSelected && { color: item.color }]}>
+      {item.label}
+    </Text>
+  </TouchableOpacity>
+);
 
 export default function SelectPriority({ value, onChange }) {
   return (
-    <View style={{ marginBottom: theme.spacing.m }}>
-      <Text style={styles.label}>Prioritas</Text>
-      <View style={styles.container}>
-        {options.map((opt) => {
-          const isActive = value?.toLowerCase() === opt.toLowerCase();
-          return (
-            <TouchableOpacity
-              key={opt}
-              style={[
-                styles.option,
-                isActive && { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary }
-              ]}
-              onPress={() => onChange(opt)}
-            >
-              <Text style={[
-                styles.text, 
-                isActive && { color: theme.colors.white, fontWeight: 'bold' }
-              ]}>
-                {opt}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+    <View style={styles.container}>
+      {PRIORITY_OPTIONS.map((item) => (
+        <PriorityChip 
+          key={item.value} 
+          item={item} 
+          isSelected={value === item.value} 
+          onPress={() => onChange(item.value)} 
+        />
+      ))}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  label: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: 8,
-  },
   container: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     gap: 10,
+    paddingHorizontal: 4,
   },
-  option: {
+  chip: {
     flex: 1,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.radius.m,
+    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.white,
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: theme.radius.l,
+    borderWidth: 1,
+    ...theme.shadow.small,
   },
-  text: {
-    color: theme.colors.text,
-    fontSize: 14,
-  }
+  chipDefault: {
+    backgroundColor: theme.colors.card,
+    borderColor: theme.colors.border,
+  },
+  chipText: {
+    marginLeft: 8,
+    fontSize: 13,
+    fontWeight: '700',
+    color: theme.colors.textMuted,
+  },
 });

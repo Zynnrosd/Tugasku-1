@@ -3,39 +3,37 @@ import {
   View, Text, FlatList, StyleSheet, RefreshControl, 
   TouchableOpacity, TextInput, Animated, StatusBar 
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+// FIX KRITIS: Mengganti import SafeAreaView dari @react-navigation/native
+// ke library yang benar untuk mengatasi error "Element type is invalid"
+import { SafeAreaView } from "react-native-safe-area-context"; 
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from 'expo-linear-gradient';
+
 import api from "../services/api";
-import theme from "../constants/theme";
-import TaskItem from "../components/TaskItem";
+import theme from "../constants/theme"; 
+import TaskItem from "../components/TaskItem"; 
 
 export default function TasksScreen({ navigation }) {
   const [tasks, setTasks] = useState([]);
   const [filteredTasks, setFilteredTasks] = useState([]);
   const [search, setSearch] = useState("");
-  const [priorityFilter, setPriorityFilter] = useState("All");
+  const [priorityFilter, setPriorityFilter] = useState("All"); 
   const [refreshing, setRefreshing] = useState(false);
   
-  // Animasi
+  // Animasi FAB dan Filter Chips
   const [fabScale] = useState(new Animated.Value(1));
-  const [filterAnimation] = useState(new Animated.Value(0)); // 0 ke 1
+  const [filterAnimation] = useState(new Animated.Value(0)); 
 
   const loadTasks = async () => {
     try {
       const res = await api.get("/tasks");
-      // Tangani jika res.data.data undefined
       const data = res.data?.data || [];
       
-      // Filter: Hanya tampilkan yang belum selesai di tab utama
       const activeData = data.filter(t => t.status !== 'Done' && t.status !== 'Completed');
-      
-      // Sort by deadline (terdekat dulu)
-      activeData.sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
+      activeData.sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
       
       setTasks(activeData);
-      // Terapkan filter yang sedang aktif (search/priority)
       applyFilter(activeData, priorityFilter, search);
     } catch (error) { 
       console.log("Error loading tasks:", error); 
@@ -46,7 +44,7 @@ export default function TasksScreen({ navigation }) {
 
   useFocusEffect(useCallback(() => { 
     loadTasks();
-    // Animasi muncul filter saat layar fokus
+    // Animasi muncul filter saat layar fokus (UX Modern)
     Animated.spring(filterAnimation, {
       toValue: 1,
       tension: 60,
@@ -78,7 +76,7 @@ export default function TasksScreen({ navigation }) {
   };
 
   const handleFABPress = () => {
-    // Animasi tombol tekan
+    // Animasi tombol tekan (UX halus)
     Animated.sequence([
       Animated.timing(fabScale, { toValue: 0.9, duration: 100, useNativeDriver: true }),
       Animated.spring(fabScale, { toValue: 1, friction: 4, useNativeDriver: true })
@@ -87,22 +85,22 @@ export default function TasksScreen({ navigation }) {
     navigation.navigate("AddTask");
   };
 
-  // Komponen Chip Filter Internal
-  const FilterChip = ({ label, value, gradient }) => {
+  // Komponen Chip Filter Internal (Disesuaikan dengan tema Ungu dan status colors)
+  const FilterChip = ({ label, value, gradient, color }) => {
     const isActive = priorityFilter === value;
     
     return (
       <TouchableOpacity 
         onPress={() => handleChip(value)}
         activeOpacity={0.7}
-        style={{ marginRight: 8 }}
+        style={{ marginRight: 10 }}
       >
         {isActive ? (
           <LinearGradient
             colors={gradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={styles.chipActive}
+            style={[styles.chipActive, { borderColor: color + '50' }]} 
           >
             <Text style={styles.chipTextActive}>{label}</Text>
           </LinearGradient>
@@ -119,10 +117,10 @@ export default function TasksScreen({ navigation }) {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
       
-      {/* HEADER SECTION */}
+      {/* HEADER SECTION - Menggunakan Gradasi Ungu */}
       <View style={styles.headerContainer}>
         <LinearGradient
-          colors={theme.gradients.cool}
+          colors={theme.gradients.deepPurple} // Gradient Ungu
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.headerBackground}
@@ -136,10 +134,9 @@ export default function TasksScreen({ navigation }) {
                   {filteredTasks.length} tugas aktif tersisa
                 </Text>
               </View>
-              {/* Profile/Settings Icon could go here */}
             </View>
 
-            {/* Search Bar */}
+            {/* Search Bar - Modern Card Style */}
             <View style={styles.searchBar}>
               <Ionicons name="search" size={20} color={theme.colors.primary} />
               <TextInput 
@@ -164,21 +161,21 @@ export default function TasksScreen({ navigation }) {
           </SafeAreaView>
         </LinearGradient>
 
-        {/* Filter Chips (Overlapping Header) */}
+        {/* Filter Chips (Animasi + Warna Baru) */}
         <Animated.View style={[styles.filtersWrapper, { transform: [{ scale: filterAnimation }] }]}>
            <FlatList 
              horizontal 
              showsHorizontalScrollIndicator={false}
              data={[
-               { label: 'Semua', value: 'All', grad: theme.gradients.primary },
-               { label: '🔥 Mendesak', value: 'High', grad: theme.gradients.danger },
-               { label: '⚠️ Menengah', value: 'Medium', grad: theme.gradients.warm },
-               { label: '🌱 Santai', value: 'Low', grad: theme.gradients.success },
+               { label: 'Semua', value: 'All', grad: theme.gradients.deepPurple, color: theme.colors.primary },
+               { label: '🔥 Mendesak', value: 'High', grad: theme.gradients.danger, color: theme.colors.danger },
+               { label: '⚠️ Menengah', value: 'Medium', grad: theme.gradients.warm, color: theme.colors.warning },
+               { label: '🌱 Santai', value: 'Low', grad: theme.gradients.success, color: theme.colors.success },
              ]}
              keyExtractor={item => item.value}
              contentContainerStyle={{ paddingHorizontal: 20 }}
              renderItem={({item}) => (
-               <FilterChip label={item.label} value={item.value} gradient={item.grad} />
+               <FilterChip label={item.label} value={item.value} gradient={item.grad} color={item.color} />
              )}
            />
         </Animated.View>
@@ -204,7 +201,7 @@ export default function TasksScreen({ navigation }) {
         }
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Ionicons name="documents-outline" size={60} color="#CBD5E0" />
+            <Ionicons name="documents-outline" size={60} color={theme.colors.border} />
             <Text style={styles.emptyTitle}>
               {search ? "Tidak ditemukan" : "Semua beres!"}
             </Text>
@@ -215,11 +212,11 @@ export default function TasksScreen({ navigation }) {
         }
       />
 
-      {/* Floating Action Button */}
+      {/* Floating Action Button - Animasi dan Gradient Ungu */}
       <Animated.View style={[styles.fabContainer, { transform: [{ scale: fabScale }] }]}>
         <TouchableOpacity onPress={handleFABPress} activeOpacity={0.9}>
           <LinearGradient
-            colors={theme.gradients.primary}
+            colors={theme.gradients.deepPurple}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.fab}
@@ -239,11 +236,13 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     marginBottom: 10,
+    ...theme.shadow.medium,
+    shadowColor: theme.colors.primaryDark
   },
   headerBackground: {
-    paddingBottom: 40, // Space for overlapping chips
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    paddingBottom: 40, 
+    borderBottomLeftRadius: theme.radius.xl, 
+    borderBottomRightRadius: theme.radius.xl,
   },
   safeAreaHeader: {
     paddingHorizontal: 20,
@@ -266,11 +265,11 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'white',
+    backgroundColor: theme.colors.card, 
     paddingHorizontal: 16,
     height: 50,
-    borderRadius: 14,
-    ...theme.shadow.medium,
+    borderRadius: theme.radius.l,
+    ...theme.shadow.small, 
   },
   searchInput: {
     flex: 1,
@@ -279,23 +278,26 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
   },
   filtersWrapper: {
-    marginTop: -24, // Overlap effect
-    height: 44,
+    marginTop: -24, 
+    height: 48,
+    justifyContent: 'center',
   },
   chip: {
-    backgroundColor: 'white',
+    backgroundColor: theme.colors.card,
     paddingVertical: 10,
     paddingHorizontal: 16,
-    borderRadius: 20,
+    borderRadius: theme.radius.l,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.colors.border,
     ...theme.shadow.small,
   },
   chipActive: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 10,
     paddingHorizontal: 18,
-    borderRadius: 20,
-    ...theme.shadow.medium,
+    borderRadius: theme.radius.l,
+    borderWidth: 2, 
   },
   chipText: {
     fontSize: 13,
@@ -305,7 +307,7 @@ const styles = StyleSheet.create({
   chipTextActive: {
     fontSize: 13,
     fontWeight: '700',
-    color: 'white',
+    color: theme.colors.white,
   },
   listContent: {
     paddingHorizontal: 20,
@@ -314,8 +316,9 @@ const styles = StyleSheet.create({
   },
   fabContainer: {
     position: 'absolute',
-    bottom: 90,
+    bottom: 30, 
     right: 20,
+    zIndex: 10, // Ditambahkan: Memastikan FAB di layer teratas
   },
   fab: {
     width: 60,
@@ -323,7 +326,8 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    ...theme.shadow.large,
+    ...theme.shadow.large, 
+    shadowColor: theme.colors.primary,
   },
   emptyState: {
     alignItems: 'center',
