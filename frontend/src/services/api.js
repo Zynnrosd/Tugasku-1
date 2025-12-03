@@ -5,10 +5,9 @@ import { Platform } from 'react-native';
 // =================================================================
 // 1. KONFIGURASI URL
 // =================================================================
-// SOLUSI: Tambahkan '/api' ke VERCEL_URL agar konsisten dengan LOCAL_URL dan routing backend
+// PERBAIKAN 1: URL Vercel harus menyertakan '/api' agar cocok dengan routing backend.
 const VERCEL_URL = "https://tugasku-1.vercel.app/api"; 
-const LOCAL_URL = "http://192.168.1.4:5000/api";
-
+const LOCAL_URL = "http://192.168.1.4:5000/api"; 
 
 // Logika: Jika mode development, pakai LOCAL. Jika build (APK), pakai VERCEL.
 const BASE_URL = __DEV__ ? LOCAL_URL : VERCEL_URL;
@@ -19,46 +18,50 @@ const BASE_URL = __DEV__ ? LOCAL_URL : VERCEL_URL;
 let deviceIdPromise = null;
 
 const getDeviceId = () => {
-  if (deviceIdPromise) return deviceIdPromise;
+  if (deviceIdPromise) return deviceIdPromise;
 
-  deviceIdPromise = (async () => {
-    let id = 'unknown-device'; // <-- Default fallback
-    try {
-      if (Platform.OS === 'android') {
-        const androidId = Application.androidId;
-        id = androidId || id; // Pastikan menggunakan fallback jika Application.androidId gagal
-      } else if (Platform.OS === 'ios') {
-        const iosId = await Application.getIosIdForVendorAsync();
-        id = iosId || id;
-      }
-      console.log(`[API] Device ID Ready: ${id}`);
-    } catch (error) {
-      console.error("Gagal mengambil Device ID:", error);
-    }
-    return id; 
-  })();
+  deviceIdPromise = (async () => {
+    let id = 'unknown-device'; // Default fallback jika ID tidak bisa diambil
+    try {
+      if (Platform.OS === 'android') {
+        const androidId = Application.androidId;
+        // PERBAIKAN 2: Gunakan ID Android jika ada, jika tidak, gunakan fallback.
+        id = androidId || id; 
+      } else if (Platform.OS === 'ios') {
+        const iosId = await Application.getIosIdForVendorAsync();
+        // Gunakan ID iOS jika ada, jika tidak, gunakan fallback.
+        id = iosId || id;
+      }
+      console.log(`[API] Device ID Ready: ${id}`);
+    } catch (error) {
+      console.error("Gagal mengambil Device ID:", error);
+    }
+    // Pastikan return value selalu string untuk header
+    return id; 
+  })();
 
-  return deviceIdPromise;
+  return deviceIdPromise;
 };
 
 // =================================================================
 // 3. AXIOS INSTANCE
 // =================================================================
 const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: BASE_URL,
 });
 
 // Interceptor: MENUNGGU device ID siap sebelum request jalan
 api.interceptors.request.use(async (config) => {
-  const deviceId = await getDeviceId(); // Await di sini kuncinya
-  
-  if (deviceId) {
-    config.headers['device-id'] = deviceId;
-  }
-  
-  return config;
+  const deviceId = await getDeviceId(); 
+  
+  // Header terjamin terpasang (dengan ID valid atau 'unknown-device')
+  if (deviceId) {
+    config.headers['device-id'] = deviceId;
+  }
+  
+  return config;
 }, (error) => {
-  return Promise.reject(error);
+  return Promise.reject(error);
 });
 
 export default api;
