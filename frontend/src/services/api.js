@@ -7,7 +7,8 @@ import { Platform } from 'react-native';
 // =================================================================
 // SOLUSI: Tambahkan '/api' ke VERCEL_URL agar konsisten dengan LOCAL_URL dan routing backend
 const VERCEL_URL = "https://tugasku-1.vercel.app/api"; 
-const LOCAL_URL = "http://192.168.1.4:8081/api"; 
+const LOCAL_URL = "http://192.168.1.4:5000/api";
+
 
 // Logika: Jika mode development, pakai LOCAL. Jika build (APK), pakai VERCEL.
 const BASE_URL = __DEV__ ? LOCAL_URL : VERCEL_URL;
