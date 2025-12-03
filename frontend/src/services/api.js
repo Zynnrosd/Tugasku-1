@@ -5,8 +5,9 @@ import { Platform } from 'react-native';
 // =================================================================
 // 1. KONFIGURASI URL
 // =================================================================
-const VERCEL_URL = "https://tugasku-1.vercel.app/"; 
-const LOCAL_URL = "http://192.168.1.4:5000/api"; 
+// SOLUSI: Tambahkan '/api' ke VERCEL_URL agar konsisten dengan LOCAL_URL dan routing backend
+const VERCEL_URL = "https://tugasku-1.vercel.app/api"; 
+const LOCAL_URL = "http://192.168.1.4:8081/api"; 
 
 // Logika: Jika mode development, pakai LOCAL. Jika build (APK), pakai VERCEL.
 const BASE_URL = __DEV__ ? LOCAL_URL : VERCEL_URL;
@@ -20,18 +21,20 @@ const getDeviceId = () => {
   if (deviceIdPromise) return deviceIdPromise;
 
   deviceIdPromise = (async () => {
-    let id = 'unknown-device';
+    let id = 'unknown-device'; // <-- Default fallback
     try {
       if (Platform.OS === 'android') {
-        id = Application.androidId;
+        const androidId = Application.androidId;
+        id = androidId || id; // Pastikan menggunakan fallback jika Application.androidId gagal
       } else if (Platform.OS === 'ios') {
-        id = await Application.getIosIdForVendorAsync();
+        const iosId = await Application.getIosIdForVendorAsync();
+        id = iosId || id;
       }
       console.log(`[API] Device ID Ready: ${id}`);
     } catch (error) {
       console.error("Gagal mengambil Device ID:", error);
     }
-    return id;
+    return id; 
   })();
 
   return deviceIdPromise;
