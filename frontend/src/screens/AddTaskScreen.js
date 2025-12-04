@@ -7,8 +7,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import DateTimePicker from '@react-native-community/datetimepicker'; 
 
-import api from "../services/api";
-import taskService from "../services/taskService";
+import api from "../services/api"; // <-- TAMBAHKAN IMPORT API UNTUK MEMPERBAIKI BUG 404
+// Hapus import taskService yang tidak diperlukan lagi: import taskService from "../services/taskService"; 
 import theme from "../constants/theme";
 // Menggunakan komponen yang sudah dimodifikasi
 import Button from "../components/Button";
@@ -113,14 +113,19 @@ export default function AddTaskScreen({ route, navigation }) {
     };
 
     try {
-      if (taskToEdit) await taskService.update(taskToEdit.id, payload);
-      else await taskService.create(payload);
+      // PERBAIKAN BUG AXIOS 404: Panggil API langsung dengan path '/tasks'
+      if (taskToEdit) {
+        await api.put(`/tasks/${taskToEdit.id}`, payload);
+      } else {
+        await api.post("/tasks", payload);
+      }
       
-      Alert.alert("Berhasil", "Tugas berhasil disimpan!");
+      Alert.alert("Berhasil", taskToEdit ? "Perubahan tugas berhasil disimpan!" : "Tugas berhasil dibuat!");
       navigation.goBack();
     } catch (error) { 
-      console.error(error);
-      Alert.alert("Gagal", "Terjadi kesalahan saat menyimpan."); 
+      // Log error yang lebih detail
+      console.error("[AXIOS ERROR] Save failed:", error.response?.status, error.response?.data || error.message);
+      Alert.alert("Gagal", `Terjadi kesalahan saat menyimpan: ${error.message}. Cek log konsol untuk detail.`); 
     } finally { 
       setLoading(false); 
     }

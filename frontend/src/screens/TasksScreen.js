@@ -1,10 +1,9 @@
 import React, { useState, useCallback } from "react";
 import { 
   View, Text, FlatList, StyleSheet, RefreshControl, 
-  TouchableOpacity, TextInput, Animated, StatusBar 
+  TouchableOpacity, TextInput, Animated, StatusBar,
+  Platform // <-- IMPORT TAMBAHAN
 } from "react-native";
-// FIX KRITIS: Mengganti import SafeAreaView dari @react-navigation/native
-// ke library yang benar untuk mengatasi error "Element type is invalid"
 import { SafeAreaView } from "react-native-safe-area-context"; 
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -13,6 +12,17 @@ import { LinearGradient } from 'expo-linear-gradient';
 import api from "../services/api";
 import theme from "../constants/theme"; 
 import TaskItem from "../components/TaskItem"; 
+
+// =================================================================
+// PERBAIKAN: Offset Bawah Dinamis untuk FAB
+// Disesuaikan untuk membersihkan Bottom Tab Bar dan Home Indicator iOS.
+// =================================================================
+const FAB_BOTTOM_OFFSET = Platform.select({
+  ios: 120,    
+  android: 95, 
+  default: 95,
+});
+// =================================================================
 
 export default function TasksScreen({ navigation }) {
   const [tasks, setTasks] = useState([]);
@@ -315,10 +325,10 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   fabContainer: {
-    position: 'absolute',
-    bottom: 30, 
-    right: 20,
-    zIndex: 10, // Ditambahkan: Memastikan FAB di layer teratas
+    position: 'absolute', 
+    bottom: 20, // <-- Diperbaiki ke 20 untuk posisi estetik
+    right: 30,
+    zIndex: 10, 
   },
   fab: {
     width: 60,

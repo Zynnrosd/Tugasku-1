@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from "react";
 import { 
   View, Text, StyleSheet, FlatList, TouchableOpacity, 
-  ActivityIndicator, RefreshControl, Image, ScrollView
+  ActivityIndicator, RefreshControl, Image, ScrollView,
+  Platform // <-- IMPORT TAMBAHAN
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
@@ -11,6 +12,17 @@ import { LinearGradient } from 'expo-linear-gradient';
 import api from "../services/api";
 import theme from "../constants/theme";
 import TaskItem from "../components/TaskItem";
+
+// =================================================================
+// PERBAIKAN: Offset Bawah Dinamis untuk FAB (Sama seperti TasksScreen)
+// Disesuaikan untuk membersihkan Bottom Tab Bar & Home Indicator iOS.
+// =================================================================
+const FAB_BOTTOM_OFFSET = Platform.select({
+  ios: 120,    
+  android: 95, 
+  default: 95,
+});
+// =================================================================
 
 export default function HomeScreen({ navigation }) {
   const [tasks, setTasks] = useState([]);
@@ -322,9 +334,9 @@ const styles = StyleSheet.create({
 
   fabContainer: {
     position: 'absolute', 
-    bottom: 30, 
+    bottom: 20, // <-- Diperbaiki ke 20 untuk posisi estetik
     right: 30,
-    zIndex: 10, // Ditambahkan: Memastikan FAB di layer teratas
+    zIndex: 10, 
   },
   fab: {
     width: 56, height: 56, borderRadius: 28,

@@ -1,10 +1,12 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Platform, View, Text, StyleSheet } from 'react-native';
+import { Platform, View, Text, StyleSheet, StatusBar } from 'react-native';
+// PERBAIKAN: Gunakan hook untuk mendapatkan insets jika diperlukan, 
+// namun di sini kita fokus memperbaiki konfigurasi style BottomTabs
+// sehingga insets ditangani oleh React Navigation secara default.
 
 import theme from '../constants/theme'; 
-// Asumsi import screens yang sudah diatur
 import HomeScreen from '../screens/HomeScreen';
 import TasksScreen from '../screens/TasksScreen';
 import CoursesScreen from '../screens/CoursesScreen';
@@ -13,7 +15,6 @@ import ProfileScreen from '../screens/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
 
-// Definisi konfigurasi layar dan ikon
 const screens = [
   { name: "Home", component: HomeScreen, icon: "home-outline", label: "Beranda" },
   { name: "Tasks", component: TasksScreen, icon: "list-circle-outline", label: "Tugas" },
@@ -27,31 +28,37 @@ function BottomTabs() {
     <Tab.Navigator
       initialRouteName="Home"
       screenOptions={{
-        // 1. Menghilangkan header bawaan (kita akan pakai header custom di tiap screen)
         headerShown: false, 
-        
         tabBarShowLabel: true,
-        // 2. Warna aktif menggunakan tema Ungu baru
         tabBarActiveTintColor: theme.colors.primary, 
         tabBarInactiveTintColor: theme.colors.textMuted,
         
-        // 3. Styling bar bottom tabs
         tabBarStyle: {
           backgroundColor: theme.colors.card,
-          // Ketinggian yang disesuaikan untuk mengakomodasi padding pada iOS
-          height: Platform.OS === 'ios' ? 90 : 60, 
-          paddingBottom: Platform.OS === 'ios' ? 25 : 5,
+          // Tinggi dasar Tab Bar adalah ~50pt. 
+          // iOS memerlukan tambahan 34pt (Home Indicator)
+          // Android mungkin memerlukan tambahan 20-30pt untuk System Navigation Bar
+          // Jika kita TIDAK menggunakan position: 'absolute', React Navigation
+          // akan menambahkan padding otomatis, kita hanya perlu mengatur height.
+          // Menggunakan nilai aman 85 untuk menampung tab bar dan safe area iOS/Android.
+          height: Platform.OS === 'ios' ? 90 : 80, // Ditingkatkan ke 80/90 untuk ruang aman
+          
+          // Memaksa padding bawah untuk Android dan iOS agar pasti tidak tertutup.
+          // Nilai paddingBottom ini menggantikan safe area inset yang seharusnya dihitung
+          paddingBottom: Platform.OS === 'ios' ? 25 : 15, // Padding bawah iOS ~25, Android ~15
           paddingTop: 5,
           borderTopWidth: 0,
-          // Shadow yang konsisten dengan tema card/shadow.medium
-          ...styles.tabBarShadow, 
+          
+          // Mengambil bayangan, tetapi MENGHAPUS position: 'absolute'
+          // Catatan: Jika ingin bayangan, tambahkan gaya bayangan di sini secara manual,
+          // dan jangan gunakan position: 'absolute'. Kita ubah style di bawah.
+          ...styles.tabBarStyling,
         },
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '600',
         },
         tabBarItemStyle: {
-          // Memberi sedikit ruang antar item untuk tampilan yang lebih lega
           marginHorizontal: 5, 
         }
       }}
@@ -76,10 +83,12 @@ function BottomTabs() {
 export default BottomTabs;
 
 const styles = StyleSheet.create({
-    tabBarShadow: {
-        ...theme.shadow.medium, // Menggunakan shadow medium dari tema
-        shadowColor: theme.colors.textMuted, // Warna shadow yang lembut
-        position: 'absolute', // Membuat efek 'mengambang' dari bottom tabs
-        borderTopWidth: 0,
-    }
+  // PERBAIKAN: Mengganti tabBarShadow menjadi tabBarStyling
+  // dan menghilangkan 'position: absolute'
+  tabBarStyling: {
+    ...theme.shadow.medium,
+    shadowColor: theme.colors.textMuted, 
+    // HAPUS: position: 'absolute', 
+    borderTopWidth: 0,
+  }
 });
