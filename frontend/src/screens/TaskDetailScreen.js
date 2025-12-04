@@ -29,7 +29,7 @@ export default function TaskDetailScreen({ route, navigation }) {
   }, [navigation]);
 
   useEffect(() => {
-     // Start animasi saat komponen terpasang
+     
      Animated.timing(fadeAnim, {
        toValue: 1,
        duration: 350,
@@ -48,7 +48,7 @@ export default function TaskDetailScreen({ route, navigation }) {
           try {
             setLoading(true);
             await taskService.remove(task.id);
-            // Kembali ke layar sebelumnya (Home/Tasks)
+
             navigation.goBack(); 
           } catch (e) {
             Alert.alert("Gagal", "Tidak bisa menghapus tugas.");
@@ -64,7 +64,6 @@ export default function TaskDetailScreen({ route, navigation }) {
     try {
       setLoading(true);
        
-      // Kirim payload hanya status
       await taskService.update(task.id, { 
          status: 'Done' 
       });
@@ -90,7 +89,7 @@ export default function TaskDetailScreen({ route, navigation }) {
 
   const isCompleted = task.status === 'Done' || task.status === 'Completed';
 
-  // Logic untuk Overdue (Menggunakan logika TaskItem)
+  // Logic untuk Overdue
   const isOverdue = (() => {
     if (!task.due_date || isCompleted) return false;
     const today = new Date();
@@ -127,7 +126,7 @@ export default function TaskDetailScreen({ route, navigation }) {
       {/* Konten Detail dengan Animasi */}
       <Animated.ScrollView 
         contentContainerStyle={styles.content}
-        style={{opacity: fadeAnim}} // Menggunakan opacity animasi
+        style={{opacity: fadeAnim}}
       >
         {/* JUDUL */}
         <Text style={styles.title}>{task.title}</Text>
@@ -191,7 +190,7 @@ export default function TaskDetailScreen({ route, navigation }) {
           {!isCompleted && (
             <TouchableOpacity style={styles.completeBtnContainer} onPress={handleComplete}>
               <LinearGradient
-                colors={theme.gradients.success} // Gradient Hijau untuk Selesai
+                colors={theme.gradients.success}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.actionBtnContent}

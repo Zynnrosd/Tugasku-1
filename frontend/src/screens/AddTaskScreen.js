@@ -7,10 +7,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import DateTimePicker from '@react-native-community/datetimepicker'; 
 
-import api from "../services/api"; // <-- TAMBAHKAN IMPORT API UNTUK MEMPERBAIKI BUG 404
-// Hapus import taskService yang tidak diperlukan lagi: import taskService from "../services/taskService"; 
+import api from "../services/api";  
 import theme from "../constants/theme";
-// Menggunakan komponen yang sudah dimodifikasi
 import Button from "../components/Button";
 import SelectPriority from "../components/SelectPriority";
 import SelectStatus from "../components/SelectStatus";
@@ -123,7 +121,7 @@ export default function AddTaskScreen({ route, navigation }) {
       Alert.alert("Berhasil", taskToEdit ? "Perubahan tugas berhasil disimpan!" : "Tugas berhasil dibuat!");
       navigation.goBack();
     } catch (error) { 
-      // Log error yang lebih detail
+      
       console.error("[AXIOS ERROR] Save failed:", error.response?.status, error.response?.data || error.message);
       Alert.alert("Gagal", `Terjadi kesalahan saat menyimpan: ${error.message}. Cek log konsol untuk detail.`); 
     } finally { 
@@ -133,7 +131,7 @@ export default function AddTaskScreen({ route, navigation }) {
 
   const formTranslateY = slideAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [500, 0], // Formulir meluncur dari bawah
+    outputRange: [500, 0],
   });
   
   const formOpacity = slideAnim.interpolate({
@@ -338,7 +336,7 @@ const styles = StyleSheet.create({
   submitBtn: { 
     marginTop: 10, 
     marginBottom: 40,
-    // Shadow diambil dari Button.js konsep, dipastikan menggunakan warna primer
+    
     shadowColor: theme.colors.primary, 
     shadowOffset: {width:0, height:4}, 
     shadowOpacity: 0.2, 

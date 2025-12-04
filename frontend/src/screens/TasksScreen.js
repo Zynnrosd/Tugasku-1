@@ -2,7 +2,7 @@ import React, { useState, useCallback } from "react";
 import { 
   View, Text, FlatList, StyleSheet, RefreshControl, 
   TouchableOpacity, TextInput, Animated, StatusBar,
-  Platform // <-- IMPORT TAMBAHAN
+  Platform
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context"; 
 import { useFocusEffect } from "@react-navigation/native";
@@ -13,9 +13,6 @@ import api from "../services/api";
 import theme from "../constants/theme"; 
 import TaskItem from "../components/TaskItem"; 
 
-// =================================================================
-// PERBAIKAN: Offset Bawah Dinamis untuk FAB
-// Disesuaikan untuk membersihkan Bottom Tab Bar dan Home Indicator iOS.
 // =================================================================
 const FAB_BOTTOM_OFFSET = Platform.select({
   ios: 120,    
@@ -130,7 +127,7 @@ export default function TasksScreen({ navigation }) {
       {/* HEADER SECTION - Menggunakan Gradasi Ungu */}
       <View style={styles.headerContainer}>
         <LinearGradient
-          colors={theme.gradients.deepPurple} // Gradient Ungu
+          colors={theme.gradients.deepPurple}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.headerBackground}
@@ -326,7 +323,7 @@ const styles = StyleSheet.create({
   },
   fabContainer: {
     position: 'absolute', 
-    bottom: 20, // <-- Diperbaiki ke 20 untuk posisi estetik
+    bottom: 20, 
     right: 30,
     zIndex: 10, 
   },

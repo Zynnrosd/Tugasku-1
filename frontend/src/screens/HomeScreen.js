@@ -2,7 +2,7 @@ import React, { useState, useCallback } from "react";
 import { 
   View, Text, StyleSheet, FlatList, TouchableOpacity, 
   ActivityIndicator, RefreshControl, Image, ScrollView,
-  Platform // <-- IMPORT TAMBAHAN
+  Platform
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
@@ -13,10 +13,7 @@ import api from "../services/api";
 import theme from "../constants/theme";
 import TaskItem from "../components/TaskItem";
 
-// =================================================================
-// PERBAIKAN: Offset Bawah Dinamis untuk FAB (Sama seperti TasksScreen)
-// Disesuaikan untuk membersihkan Bottom Tab Bar & Home Indicator iOS.
-// =================================================================
+
 const FAB_BOTTOM_OFFSET = Platform.select({
   ios: 120,    
   android: 95, 
@@ -29,13 +26,10 @@ export default function HomeScreen({ navigation }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  
-  // State untuk tanggal yang dipilih di kalender
+
   const [selectedDate, setSelectedDate] = useState(new Date());
 
-  // =================================================================
-  // LOGIKA STATISTIK DASHBOARD (Dipertahankan)
-  // =================================================================
+  
   const getStats = () => {
     const total = tasks.length;
     const completed = tasks.filter(t => t.status === 'Done' || t.status === 'Completed').length;
@@ -59,8 +53,7 @@ export default function HomeScreen({ navigation }) {
 
   const stats = getStats();
 
-  // =================================================================
-  // GENERATE KALENDER & FILTER DATA (Dipertahankan)
+
   // =================================================================
   const getFilteredTasks = () => {
     const selectedDateStr = selectedDate.toISOString().split('T')[0];
@@ -90,8 +83,6 @@ export default function HomeScreen({ navigation }) {
 
   const calendarDays = generateCalendarDays();
 
-  // =================================================================
-  // FETCH DATA API (Dipertahankan)
   // =================================================================
   const fetchData = async () => {
     try {
@@ -129,10 +120,8 @@ export default function HomeScreen({ navigation }) {
     );
   }
 
-  // Menggunakan warna primary baru untuk avatar fallback
   const avatarUri = profile?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.name||'User')}&background=${theme.colors.primary.substring(1)}&color=fff`;
 
-  // Render item Kalender
   const renderCalendarItem = ({ item }) => {
     const isSelected = item.toDateString() === selectedDate.toDateString();
     return (
@@ -235,7 +224,7 @@ export default function HomeScreen({ navigation }) {
             </View>
           ) : (
             filteredTasks.map(item => (
-              <TaskItem // Menggunakan TaskItem yang sudah di-redesign
+              <TaskItem 
                 key={item.id}
                 task={item} 
                 onPress={() => navigation.navigate("TaskDetail", { task: item })} 
@@ -252,7 +241,7 @@ export default function HomeScreen({ navigation }) {
         onPress={() => navigation.navigate("AddTask")}
       >
          <LinearGradient
-            colors={theme.gradients.deepPurple} // Gradient Ungu
+            colors={theme.gradients.deepPurple}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.fab}
@@ -334,7 +323,7 @@ const styles = StyleSheet.create({
 
   fabContainer: {
     position: 'absolute', 
-    bottom: 20, // <-- Diperbaiki ke 20 untuk posisi estetik
+    bottom: 20,
     right: 30,
     zIndex: 10, 
   },

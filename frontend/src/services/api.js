@@ -2,26 +2,19 @@ import axios from 'axios';
 import * as Application from 'expo-application';
 import { Platform } from 'react-native';
 
-// =================================================================
-// 1. KONFIGURASI URL (DIUBAH KE VERCEL SAJA)
-// =================================================================
-// Sekarang menggunakan URL Vercel yang sudah ter-deploy
+// 1. KONFIGURASI URL
 const VERCEL_URL = "https://tugasku-1-rr6y.vercel.app/api"; 
-// const LOCAL_URL = "http://10.131.87.229:5000/api"; // Baris ini tidak lagi digunakan
 
-// BASE_URL dipaksa menggunakan VERCEL_URL
 const BASE_URL = VERCEL_URL;
 
-// =================================================================
 // 2. SETUP DEVICE ID DENGAN PROMISE CACHING
-// =================================================================
 let deviceIdPromise = null;
 
 const getDeviceId = () => {
   if (deviceIdPromise) return deviceIdPromise;
 
   deviceIdPromise = (async () => {
-    let id = 'unknown-device'; // Default fallback
+    let id = 'unknown-device';
     try {
       if (Platform.OS === 'android') {
         const androidId = Application.androidId;
@@ -41,9 +34,7 @@ const getDeviceId = () => {
   return deviceIdPromise;
 };
 
-// =================================================================
 // 3. AXIOS INSTANCE
-// =================================================================
 const api = axios.create({
   baseURL: BASE_URL,
 });

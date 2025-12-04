@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
   textAreaContainer: { 
     alignItems: 'flex-start', 
     paddingVertical: 12,
-    height: 100, // Tinggi tetap untuk textarea
+    height: 100,
   },
   inputIcon: { marginRight: 10 },
   input: { 

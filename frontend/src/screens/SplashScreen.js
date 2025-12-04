@@ -6,7 +6,7 @@ import theme from '../constants/theme';
 
 export default function SplashScreen({ onComplete }) {
   useEffect(() => {
-    // Simulasi loading 2 detik
+    
     const timer = setTimeout(() => {
       onComplete();
     }, 2500);

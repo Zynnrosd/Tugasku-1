@@ -27,21 +27,15 @@ const taskService = {
     const response = await api.delete(`/tasks/${id}`);
     return response.data;
   },
-  
-  /**
-   * Menghapus banyak tugas sekaligus dengan memanggil API DELETE 
-   * untuk setiap ID secara paralel.
-   */
+
   removeMultiple: async (ids) => {
-    // Buat array Promise untuk setiap operasi penghapusan
+
     const deletionPromises = ids.map(id => taskService.remove(id));
-    
-    // Tunggu semua promise selesai (baik sukses maupun gagal)
+ 
     const results = await Promise.allSettled(deletionPromises);
 
     const failures = results.filter(r => r.status === 'rejected');
     
-    // Jika ada yang gagal, lemparkan error untuk ditangani oleh screen
     if (failures.length > 0) {
       console.error("Partial delete failure:", failures);
       throw new Error(`Gagal menghapus ${failures.length} tugas. Periksa koneksi.`);

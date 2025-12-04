@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
-// Import Routes (Wajib pakai .js di akhir filename)
+// Import Routes
 import tasksRouter from './routes/tasks.js';
 import coursesRouter from './routes/courses.js';
 import profilesRouter from './routes/profiles.js';
@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// Logger sederhana (pengganti middleware logger jika file logger.js belum ada/error)
+// Logger sederhana 
 app.use((req, res, next) => {
   console.log(`[REQUEST] ${req.method} ${req.url} | Device: ${req.headers['device-id'] || 'No-ID'}`);
   next();

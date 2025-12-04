@@ -102,10 +102,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden', 
     ...theme.shadow.small, 
     borderWidth: 1, 
-    borderColor: theme.colors.border + '40', // Border default
+    borderColor: theme.colors.border + '40',
   },
   cardOverdue: { 
-    borderColor: theme.colors.danger + '40' // Border merah saat overdue
+    borderColor: theme.colors.danger + '40'
   },
   borderGradient: { 
     width: 6, 
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   categoryBadge: { 
     flexDirection: 'row', alignItems: 'center', gap: 6, 
-    backgroundColor: theme.colors.primaryLight, // Ungu muda
+    backgroundColor: theme.colors.primaryLight,
     paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, maxWidth: '60%' 
   },
   categoryText: { 

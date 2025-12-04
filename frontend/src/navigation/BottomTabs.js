@@ -2,9 +2,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Platform, View, Text, StyleSheet, StatusBar } from 'react-native';
-// PERBAIKAN: Gunakan hook untuk mendapatkan insets jika diperlukan, 
-// namun di sini kita fokus memperbaiki konfigurasi style BottomTabs
-// sehingga insets ditangani oleh React Navigation secara default.
+
 
 import theme from '../constants/theme'; 
 import HomeScreen from '../screens/HomeScreen';
@@ -35,23 +33,14 @@ function BottomTabs() {
         
         tabBarStyle: {
           backgroundColor: theme.colors.card,
-          // Tinggi dasar Tab Bar adalah ~50pt. 
-          // iOS memerlukan tambahan 34pt (Home Indicator)
-          // Android mungkin memerlukan tambahan 20-30pt untuk System Navigation Bar
-          // Jika kita TIDAK menggunakan position: 'absolute', React Navigation
-          // akan menambahkan padding otomatis, kita hanya perlu mengatur height.
-          // Menggunakan nilai aman 85 untuk menampung tab bar dan safe area iOS/Android.
-          height: Platform.OS === 'ios' ? 90 : 80, // Ditingkatkan ke 80/90 untuk ruang aman
+         
+          height: Platform.OS === 'ios' ? 90 : 80,
           
-          // Memaksa padding bawah untuk Android dan iOS agar pasti tidak tertutup.
-          // Nilai paddingBottom ini menggantikan safe area inset yang seharusnya dihitung
-          paddingBottom: Platform.OS === 'ios' ? 25 : 15, // Padding bawah iOS ~25, Android ~15
+          paddingBottom: Platform.OS === 'ios' ? 25 : 15,
           paddingTop: 5,
           borderTopWidth: 0,
           
-          // Mengambil bayangan, tetapi MENGHAPUS position: 'absolute'
-          // Catatan: Jika ingin bayangan, tambahkan gaya bayangan di sini secara manual,
-          // dan jangan gunakan position: 'absolute'. Kita ubah style di bawah.
+          
           ...styles.tabBarStyling,
         },
         tabBarLabelStyle: {
@@ -83,12 +72,10 @@ function BottomTabs() {
 export default BottomTabs;
 
 const styles = StyleSheet.create({
-  // PERBAIKAN: Mengganti tabBarShadow menjadi tabBarStyling
-  // dan menghilangkan 'position: absolute'
+  
   tabBarStyling: {
     ...theme.shadow.medium,
-    shadowColor: theme.colors.textMuted, 
-    // HAPUS: position: 'absolute', 
+    shadowColor: theme.colors.textMuted,  
     borderTopWidth: 0,
   }
 });

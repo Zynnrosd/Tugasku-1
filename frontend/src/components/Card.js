@@ -13,7 +13,7 @@ export default function Card({ children, style, shadow = 'medium' }) {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: theme.colors.card,
-    borderRadius: theme.radius.xl, // Sudut lebih membulat
+    borderRadius: theme.radius.xl,
     padding: 20,
     marginBottom: 10,
     borderWidth: 1,

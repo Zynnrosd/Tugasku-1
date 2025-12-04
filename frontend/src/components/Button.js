@@ -13,7 +13,7 @@ export default function Button({ title, onPress, style, textStyle, loading, vari
         disabled={loading}
       >
         <LinearGradient
-          colors={theme.gradients.deepPurple} // Menggunakan deepPurple gradient untuk tombol primer
+          colors={theme.gradients.deepPurple}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={[styles.button, styles.primaryButton]}
@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   primaryButton: {
-    ...theme.shadow.medium, // Memberi shadow khas tombol utama
+    ...theme.shadow.medium,
     shadowColor: theme.colors.primary,
   },
   secondaryButton: {

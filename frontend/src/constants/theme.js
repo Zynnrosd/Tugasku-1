@@ -1,22 +1,22 @@
 const colors = {
   // Warna Primer (Ungu)
-  primary: "#7C3AED", // Ungu utama
-  primaryLight: "#EDE7FF", // Ungu sangat muda
+  primary: "#7C3AED",
+  primaryLight: "#EDE7FF", 
   primaryDark: "#5D3FBF",
-  secondary: "#A78BFA", // Ungu sekunder
+  secondary: "#A78BFA",
   
   // Warna Status (Sesuai psikologi warna)
-  success: "#10B981", // Hijau (Selesai)
-  danger: "#EF4444", // Merah (Terlambat/Mendesak)
-  warning: "#F59E0B", // Kuning/Jingga (Menengah/Peringatan)
-  info: "#5C6BC0", // Biru Kebiruan (Proses/In Progress)
+  success: "#10B981",
+  danger: "#EF4444", 
+  warning: "#F59E0B",
+  info: "#5C6BC0",
 
   // Warna Netral & Teks
-  background: "#F8F9FC", // Background terang
-  card: "#FFFFFF", // Kartu putih
-  text: "#1F2937", // Teks gelap
-  textMuted: "#6B7280", // Teks abu-abu
-  border: '#E5E7EB', // Warna border
+  background: "#F8F9FC",
+  card: "#FFFFFF",
+  text: "#1F2937",
+  textMuted: "#6B7280",
+  border: '#E5E7EB',
   white: "#FFFFFF",
 };
 

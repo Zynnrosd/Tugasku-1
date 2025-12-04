@@ -7,7 +7,7 @@ export const getCourses = async (req, res) => {
     const { data, error } = await supabase
       .from('courses')
       .select('*')
-      .eq('device_id', deviceId) // Filter: Hanya ambil course milik device ini
+      .eq('device_id', deviceId)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -28,7 +28,7 @@ export const createCourse = async (req, res) => {
       .from('courses')
       .insert([
         { 
-          device_id: deviceId, // Wajib insert device_id
+          device_id: deviceId,
           name, 
           code, 
           description 
@@ -54,7 +54,7 @@ export const updateCourse = async (req, res) => {
       .from('courses')
       .update({ name, code, description })
       .eq('id', id)
-      .eq('device_id', deviceId) // Pastikan milik user sendiri
+      .eq('device_id', deviceId) 
       .select()
       .single();
 

@@ -20,8 +20,8 @@ const StatusChip = ({ item, isSelected, onPress }) => (
     <Ionicons name={item.icon} size={16} color={isSelected ? item.color : theme.colors.textMuted} />
     <Text 
       style={[styles.chipText, isSelected && { color: item.color }]}
-      numberOfLines={1} // <-- PERBAIKAN: Mencegah teks bertumpuk
-      ellipsizeMode="tail" // <-- PERBAIKAN: Memotong teks jika terlalu panjang
+      numberOfLines={1}
+      ellipsizeMode="tail"
     >
       {item.label}
     </Text>
@@ -51,8 +51,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   chip: {
-    flex: 1, // <-- PERBAIKAN: Paksa chip berbagi ruang secara merata
-    minWidth: 0, // <-- PERBAIKAN: Izinkan chip menyusut dari lebar defaultnya
+    flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

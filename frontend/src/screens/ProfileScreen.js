@@ -6,7 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from 'expo-linear-gradient'; 
-// FIX KRITIS: Import useFocusEffect yang hilang
+
 import { useFocusEffect } from "@react-navigation/native"; 
 
 import theme from "../constants/theme";
@@ -14,11 +14,11 @@ import api from "../services/api";
 
 const ImagePicker = {
     launchImageLibraryAsync: async () => ({ canceled: false, assets: [{ uri: 'simulated_local_uri_123' }] }),
-    MediaTypeOptions: { Images: 'Images' }, // Simulasi enum
+    MediaTypeOptions: { Images: 'Images' },
 };
 
 import profileService from "../services/profileService";
-// Helper Component: InputField dengan style modern
+// Helper Component
 const InputField = ({ label, value, onChange, editable, icon, multiline, keyboardType }) => (
   <View style={styles.inputContainer}>
     <Text style={styles.inputLabel}>{label}</Text>
@@ -56,12 +56,12 @@ export default function ProfileScreen() {
   const [bio, setBio] = useState(""); 
   const [avatar, setAvatar] = useState("");
   
-  // Animasi untuk konten utama
+
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current; 
 
   const fetchProfile = async () => {
-    // Reset animasi agar muncul lagi jika diakses kedua kali
+
     fadeAnim.setValue(0);
     slideAnim.setValue(20);
     
@@ -80,7 +80,6 @@ export default function ProfileScreen() {
     } finally { 
       setLoading(false); 
       
-      // Setelah data dimuat, jalankan animasi
       Animated.parallel([
           Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
           Animated.timing(slideAnim, { toValue: 0, duration: 400, useNativeDriver: true }),
@@ -109,7 +108,7 @@ export default function ProfileScreen() {
       
       setIsEditing(false);
       Alert.alert("Berhasil", "Profil diperbarui.");
-      fetchProfile(); // Refresh data
+      fetchProfile();
     } catch (error) {
       Alert.alert("Gagal", "Gagal menyimpan data.");
     } finally {

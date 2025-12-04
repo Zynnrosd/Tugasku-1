@@ -28,10 +28,8 @@ const profileService = {
     
     const fileName = localUri.split('/').pop() || 'avatar.jpg';
     
-    // Simulasikan URL publik yang unik
     const simulatedPublicUrl = `https://mysupabase.com/storage/avatars/${userId}/${fileName}?t=${new Date().getTime()}`;
     
-    // Simulasikan waktu upload
     await new Promise(resolve => setTimeout(resolve, 1500)); 
     
     return simulatedPublicUrl;

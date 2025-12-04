@@ -12,11 +12,10 @@ import theme from "../constants/theme";
 
 // Componente CourseItem Card yang diperbarui dengan Animasi
 const CourseItem = ({ item, onDelete, index }) => {
-    // Animasi: Slide-in dari bawah
     const animValue = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-        // Efek stagger (berurutan) saat dimuat
+        
         Animated.timing(animValue, {
             toValue: 1,
             duration: 300,
@@ -27,7 +26,7 @@ const CourseItem = ({ item, onDelete, index }) => {
 
     const translateY = animValue.interpolate({
         inputRange: [0, 1],
-        outputRange: [50, 0], // Mulai dari 50px di bawah, berakhir di posisi normal
+        outputRange: [50, 0], 
     });
     
     return (

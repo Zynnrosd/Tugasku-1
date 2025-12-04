@@ -56,7 +56,7 @@ export default function HistoryScreen({ navigation }) {
     loadCompletedTasks();
   };
   
-  // LOGIKA HAPUS RIWAYAT (Menggunakan removeMultiple yang baru)
+  // LOGIKA HAPUS RIWAYAT
   const handleClearHistory = () => {
     if (tasks.length === 0) return;
     
@@ -75,9 +75,9 @@ export default function HistoryScreen({ navigation }) {
               await taskService.removeMultiple(completedIds); 
               
               Alert.alert("Berhasil", "Riwayat tugas berhasil dibersihkan!");
-              setTasks([]); // Update UI segera
+              setTasks([]);
             } catch (e) {
-              // Menangkap error dari removeMultiple jika ada yang gagal
+              
               Alert.alert("Gagal", e.message || "Gagal membersihkan riwayat. Pastikan API berjalan.");
             } finally {
               setDeleting(false);
@@ -183,10 +183,10 @@ const styles = StyleSheet.create({
   clearButton: {
     padding: 8,
     borderRadius: theme.radius.m,
-    backgroundColor: theme.colors.background, // Background ringan
+    backgroundColor: theme.colors.background,
     justifyContent: 'center',
     alignItems: 'center',
-    width: 40, // Lebar fixed untuk icon button
+    width: 40,
     height: 40,
     borderWidth: 1,
     borderColor: theme.colors.border,
