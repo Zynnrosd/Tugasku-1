@@ -255,15 +255,47 @@ export default function HomeScreen({ navigation }) {
 }
 
 // Komponen Kecil untuk Kotak Statistik
-const StatBox = ({ label, count, icon, color, bg }) => (
-  <View style={[styles.statCard, { backgroundColor: bg, borderColor: color + '30', borderWidth: 1 }]}>
-    <View style={styles.statIconRow}>
-      <Ionicons name={icon} size={20} color={color} />
-      <Text style={[styles.statCount, { color: color }]}>{count}</Text>
+const StatBox = ({ label, count, icon, color, bg }) => {
+  const isTranslucentBg = bg.endsWith('10');
+  
+  let finalBg = bg;
+  let finalBorderColor = color + '30';
+
+  if (Platform.OS === 'android') {
+    if (isTranslucentBg) {
+      let lightBgColor = theme.colors.card;
+      if (color === theme.colors.success) {
+        lightBgColor = theme.colors.successLight;
+      } else if (color === theme.colors.warning) {
+        lightBgColor = theme.colors.warningLight;
+      } else if (color === theme.colors.danger) {
+        lightBgColor = theme.colors.dangerLight;
+      }
+      finalBg = lightBgColor;
+      finalBorderColor = color; 
+    } else {
+      finalBorderColor = color;
+    }
+  }
+
+  return (
+    <View style={[
+        styles.statCard, 
+        { 
+          backgroundColor: finalBg, 
+          borderColor: finalBorderColor, 
+          borderWidth: 1 
+        }
+      ]}
+    >
+      <View style={styles.statIconRow}>
+        <Ionicons name={icon} size={20} color={color} />
+        <Text style={[styles.statCount, { color: color }]}>{count}</Text>
+      </View>
+      <Text style={styles.statLabel}>{label}</Text>
     </View>
-    <Text style={styles.statLabel}>{label}</Text>
-  </View>
-);
+  );
+};
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },

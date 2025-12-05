@@ -24,7 +24,7 @@ export default function TaskItem({ task, onPress }) {
   const priorityConfig = getPriorityConfig(task.priority);
   const statusConfig = getStatusConfig(task.status);
 
-  // LOGIKA TANGGAL & OVERDUE (dipertahankan)
+  // LOGIKA TANGGAL & OVERDUE
   const displayDate = task.due_date 
     ? new Date(task.due_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) 
     : "Tanpa Batas";

@@ -5,10 +5,13 @@ const colors = {
   primaryDark: "#5D3FBF",
   secondary: "#A78BFA",
   
-  // Warna Status (Sesuai psikologi warna)
+ // Warna Status
   success: "#10B981",
+  successLight: "#D1FAE5",
   danger: "#EF4444", 
+  dangerLight: "#FEE2E2", 
   warning: "#F59E0B",
+  warningLight: "#FEF3C7", 
   info: "#5C6BC0",
 
   // Warna Netral & Teks
